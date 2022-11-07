@@ -80,6 +80,10 @@ class EDBManager:
             return q.all()
 
     def resolve_secondary_id(self, edb_tag: str, edb_id: str) -> str | None:
-
+        """
+        SELECT edb_id, edb_source, secondary_ids
+        FROM public.secondary_id
+        WHERE '40459' = ANY(secondary_ids) AND edb_source = 'chebi';
+        """
         # not implemented
         return None

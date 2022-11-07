@@ -9,7 +9,7 @@ class MetaboliteConsistent:
     # extra refs
     #pdb_id: list[str]
     attr_mul: dict[str, list[str]]# EDB IDs and attributes with cardinality > 1
-    attr_other: dict[str, str] # other marked attributes and other well known IDS
+    attr_other: dict[str, list[str] | str] # other marked attributes and other well known IDS
 
     chebi_id: str = None
     kegg_id: str = None
@@ -23,7 +23,7 @@ class MetaboliteConsistent:
     swisslipids_id: str = None
 
     # structures
-    mol: str = None
+    #mol: str = None
     formula: str = None
     inchi: str = None
     inchikey: str = None

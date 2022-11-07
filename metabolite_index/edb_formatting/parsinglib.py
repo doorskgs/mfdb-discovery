@@ -22,10 +22,9 @@ def strip_attr(r, key, prefix):
         return
 
     if isinstance(r[key], list):
-        r[key] = list(map(lambda v: v.lstrip(prefix), r[key]))
+        r[key] = list(map(lambda v: v.removeprefix(prefix).lstrip(), r[key]))
     else:
-        r[key] = r[key].lstrip(prefix)
-
+        r[key] = r[key].removeprefix(prefix).lstrip()
 
 
 def flatten(v: dict, attr):
@@ -41,10 +40,9 @@ def try_flatten(arr: list):
     :return:
     """
 
-    if isinstance(arr, (list, tuple, set)):
-        assert len(arr) <= 1, "can't flatten list"
+    if isinstance(arr, (list, tuple, set)) and len(arr) <= 1:
+        # scalar
         return next(chain(arr), None)
-    # scalar
     return arr
 
 
@@ -65,28 +63,13 @@ def force_flatten(arr, store_in: list):
     # scalar
     return arr
 
-
-def force_list(r, key, f=None):
+def force_list(coll):
     """
     Forces value to be a list of element 1
     """
-    if key not in r:
-        return
-
-    v = r[key]
-
-    if isinstance(v, (list, tuple, set)):
-        if f is not None:
-            r[key] = [f(e) for e in v]
-        else:
-            r[key] = v
-    elif v is None:
-        r[key] = None
-    else:
-        if f is not None:
-            r[key] = [f(v)]
-        else:
-            r[key] = [v]
+    if isinstance(coll, (list, tuple, set)):
+        return list(coll)
+    return [coll]
 
 def remap_keys(v, _mapping: dict):
     for k in set(v) & set(_mapping):
@@ -106,20 +89,38 @@ def remap_keys(v, _mapping: dict):
             else:
                 v[new_key].append(val)
 
-def handle_quotes(me, k):
-    """
-    Replaces problematic characters for json serialization
-    "
-    :param me:
-    :param k:
-    :return:
-    """
-    if k in me:
-        if isinstance(me[k], list):
-            me[k] = list(map(lambda x: x.replace('"', '”').replace('\t', ' '), me[k]))
-        else:
-            me[k] = me[k].replace('"', '”').replace('\t', ' ')
+_REPLACE_CHARS = {
+    # normalized quotations chr(8221) chr(96)
+    ord('"'): '”',
+    8243: '”', #″
+    8221: '”', #”
+    8217: "'", #’
+    8242: "'", #′
+    8216: "'", #‘
+    96: "'", #`
+    # normalized dash
+    173: '-', # ­
+    8211: '-',  # –
+    8209: '-',  # ‑
+    # special representation that are converted back frontend side
+    ord('\\'): '<ESC>',
+    # manual input errors that are post-corrected (+tab, NL characters)
+    160: ' ',  #  
+    65279: ' ',  # ﻿
+    8203: ' ', #​
+    65533: ' ',  #�
+    8201: ' ',  #
+} | {i: ' ' for i in range(1, 32)}
 
+def handle_names(me: dict):
+    # force_list(data, 'names')
+    # handle_quotes(data, 'names')
+    if not isinstance(me['names'], (tuple, list, set)):
+        me['names'] = [me['names']]
+    me['names'] = list(set(n.translate(_REPLACE_CHARS) for n in me['names'] if n is not None))
+
+def handle_quotes(me, k):
+    raise NotImplementedError()
 
 class MultiDict(dict):
     """
@@ -135,3 +136,10 @@ class MultiDict(dict):
             oldval.append(value)
         else:
             self.__setitem__(key, value)
+
+    def extend(self, key, value: list):
+        if isinstance(value, (list, tuple, set)):
+            for val in value:
+                self.append(key, val)
+        else:
+            self.append(key, value)
