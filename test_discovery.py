@@ -12,8 +12,8 @@ disco.verbose = True
 # ATP
 disco.clear()
 meta = mi.MetaboliteDiscovery()
-meta.chebi_id = {'CHEBI:15422'}
-disco.add_input(meta, mi.EDBSource.chebi)
+meta.chebi_id.add('CHEBI:15422')
+disco.add_input(meta, mi.EDBSource.hmdb)
 
 # run
 disco.run_discovery()

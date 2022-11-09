@@ -1,9 +1,9 @@
 import requests
 
 from .ApiClientBase import ApiClientBase
+from .api_parsers.keggparser import parse_kegg
 from ..attributes import EDB_SOURCES, EDB_SOURCES_OTHER
 from ..edb_formatting import pad_id, remap_keys, preprocess, map_to_edb_format
-from ..edb_parsers.keggparser import parse_kegg
 from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
@@ -29,7 +29,7 @@ class KeggClient(ApiClientBase):
 
         remap_keys(data, self._mapping)
         preprocess(data)
-        data, etc = map_to_edb_format(data, important_attr=self._important_attr, edb_format=None, exclude_etc={None})
+        data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
         data['edb_source'] = 'kegg'
         return MetaboliteConsistent(**data)

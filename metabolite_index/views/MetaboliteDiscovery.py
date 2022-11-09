@@ -1,34 +1,34 @@
 from dataclasses import dataclass, field
 
+from metabolite_index.edb_formatting import TrimSet, strip_attr
 from eme.mapper import map_to
 
-from metabolite_index.views.MetaboliteConsistent import MetaboliteConsistent
 
 
 @dataclass
 class MetaboliteDiscovery:
-    names: set[str] = field(default_factory=set)
+    names: set[str] = field(default_factory=TrimSet)
 
-    chebi_id: set[str] = field(default_factory=set)
-    kegg_id: set[str] = field(default_factory=set)
-    lipidmaps_id: set[str] = field(default_factory=set)
-    pubchem_id: set[str] = field(default_factory=set)
-    hmdb_id: set[str] = field(default_factory=set)
-    cas_id: set[str] = field(default_factory=set)
-    chemspider_id: set[str] = field(default_factory=set)
-    metlin_id: set[str] = field(default_factory=set)
+    chebi_id: set[str] = field(default_factory=TrimSet)
+    kegg_id: set[str] = field(default_factory=TrimSet)
+    lipidmaps_id: set[str] = field(default_factory=TrimSet)
+    pubchem_id: set[str] = field(default_factory=TrimSet)
+    hmdb_id: set[str] = field(default_factory=lambda: TrimSet(trimmer=lambda x: strip_attr(x, 'HMDB')))
+    cas_id: set[str] = field(default_factory=TrimSet)
+    chemspider_id: set[str] = field(default_factory=TrimSet)
+    metlin_id: set[str] = field(default_factory=TrimSet)
 
     # structures
-    mol: set[str] = field(default_factory=set)
-    formula: set[str] = field(default_factory=set)
-    inchi: set[str] = field(default_factory=set)
-    inchikey: set[str] = field(default_factory=set)
-    smiles: set[str] = field(default_factory=set)
+    mol: set[str] = field(default_factory=TrimSet)
+    formula: set[str] = field(default_factory=TrimSet)
+    inchi: set[str] = field(default_factory=TrimSet)
+    inchikey: set[str] = field(default_factory=TrimSet)
+    smiles: set[str] = field(default_factory=TrimSet)
 
     # mass
-    charge: set[float] = field(default_factory=set)
-    mass: set[float] = field(default_factory=set)
-    mi_mass: set[float] = field(default_factory=set)
+    charge: set[float] = field(default_factory=TrimSet)
+    mass: set[float] = field(default_factory=TrimSet)
+    mi_mass: set[float] = field(default_factory=TrimSet)
 
     description: dict[str, str] = field(default_factory=dict)
 
@@ -50,7 +50,7 @@ class MetaboliteDiscovery:
         sb = [self.__class__.__name__]
 
         for attr, vals in self.__dict__.items():
-            desomsz = ', '.join(vals)
+            desomsz = ' • '.join(map(str, vals))
             sb.append(f'  {attr:<16}: {desomsz}')
 
         return '\n'.join(sb)

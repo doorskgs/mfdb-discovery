@@ -7,6 +7,7 @@ from .entities.SecondaryID import SecondaryID
 from .entities.sqlbase import EntityBase
 
 from .repositories.EDBRepository import EDBRepository
+from .repositories.SecondaryIDRepository import SecondaryIDRepository
 #from .repositories.MDBRepository import MDBRepository
 
 

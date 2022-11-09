@@ -3,7 +3,7 @@ from io import StringIO, BytesIO
 import xml.etree.ElementTree as ET
 
 from .ApiClientBase import ApiClientBase
-from ..edb_formatting import pad_id, preprocess, remap_keys, map_to_edb_format, flatten_hmdb_hierarchies2
+from ..edb_formatting import pad_id, preprocess, remap_keys, map_to_edb_format
 from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
@@ -51,6 +51,8 @@ class HMDBClient(ApiClientBase):
 
         _xevt, xmeta = next(context)
 
+        raise NotImplementedError("copy from DB Builder new HMDB shiet")
+
         data = parse_xml_recursive(context, has_xmlns=False)
 
         if isinstance(data, str) or data is None:
@@ -59,7 +61,7 @@ class HMDBClient(ApiClientBase):
         flatten_hmdb_hierarchies2(data)
         remap_keys(data, self._mapping)
         preprocess(data)
-        data, etc = map_to_edb_format(data, important_attr=self._important_attr, edb_format=None, exclude_etc={None})
+        data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
         data['edb_source'] = 'hmdb'
         return MetaboliteConsistent(**data)

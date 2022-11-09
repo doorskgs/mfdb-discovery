@@ -17,14 +17,14 @@ def _nil(var):
     return not bool(s)
 
 
-def strip_attr(r, key, prefix):
-    if key not in r or not r[key]:
-        return
+def strip_attr(v: list | set | str, prefix):
+    if not v:
+        return v
 
-    if isinstance(r[key], list):
-        r[key] = list(map(lambda v: v.removeprefix(prefix).lstrip(), r[key]))
+    if isinstance(v, list):
+        return list(map(lambda v: v.removeprefix(prefix).lstrip(), v))
     else:
-        r[key] = r[key].removeprefix(prefix).lstrip()
+        return v.removeprefix(prefix).lstrip()
 
 
 def flatten(v: dict, attr):
@@ -114,32 +114,12 @@ _REPLACE_CHARS = {
 
 def handle_names(me: dict):
     # force_list(data, 'names')
-    # handle_quotes(data, 'names')
+
     if not isinstance(me['names'], (tuple, list, set)):
         me['names'] = [me['names']]
     me['names'] = list(set(n.translate(_REPLACE_CHARS) for n in me['names'] if n is not None))
 
-def handle_quotes(me, k):
-    raise NotImplementedError()
-
-class MultiDict(dict):
-    """
-    A dict-like object that tries to keep added items singular
-    """
-
-    def append(self, key, value):
-        if oldval := self.get(key):
-            # there are multiple entries in buffer, store them in a list
-            if not isinstance(oldval, list):
-                oldval = [oldval]
-                self.__setitem__(key, oldval)
-            oldval.append(value)
-        else:
-            self.__setitem__(key, value)
-
-    def extend(self, key, value: list):
-        if isinstance(value, (list, tuple, set)):
-            for val in value:
-                self.append(key, val)
-        else:
-            self.append(key, value)
+def replace_esc(s: str):
+    if '\\' in s:
+        return s.replace('\\', '<ESC>')
+    return s

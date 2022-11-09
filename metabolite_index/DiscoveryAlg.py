@@ -46,8 +46,6 @@ class DiscoveryAlg:
         # What attributes to use for reversed lookup
         self.reverse_lookup: set[str] = COMMON_ATTRIBUTES | EDB_ID_ATTR
 
-        self.mgr = EDBManager()
-
         # Data sets used for
         self.Q = queue.Queue()
         self.undiscovered = set()
@@ -59,7 +57,7 @@ class DiscoveryAlg:
         # main object to aggregate EDB sources
         self.meta: MetaboliteDiscovery | None = None
 
-        # TODO: @ITT: discoalg builder?
+        self.mgr = EDBManager(self.secondary_ids)
 
     def add_input(self, meta: MetaboliteDiscovery, edb_source: EDBSource = None):
         """
@@ -70,7 +68,6 @@ class DiscoveryAlg:
         """
         # attributes to resolve
         opts = self.get_opts(edb_source)
-
         self.meta = meta
 
         for edb_tag in opts.edb_ids:
@@ -95,14 +92,9 @@ class DiscoveryAlg:
 
             # todo: @ITT: BUG edb_id is the SOURCE id not the explorable one!!!!!
             edb_record = self.mgr.get_metabolite(*edb_ref)
-            # todo =============================
 
             if not edb_record:
-                # metabolite not found for EDB ID, but it still might be a secondary ID
-                # attempt to re-run algorithm if we find its primary ID
-                if not self.resolve_secondary_id(edb_ref):
-                    # edb_id is not a secondary id, mark it unable to resolve
-                    self.undiscovered.add((edb_ref, edb_src))
+                self.undiscovered.add((edb_ref, edb_src))
                 continue
 
             # edb record was discovered, add it to previously discovered data:
@@ -119,8 +111,9 @@ class DiscoveryAlg:
                     self.enqueue(edb_new, edb_ref)
 
             if self.Q.empty():
-                # once we ran out of ids to explore, try reverse queries as a final attempt
-                self.resolve_reverse_queries()
+            #     # once we ran out of ids to explore, try reverse queries as a final attempt
+            #     self.resolve_reverse_queries()
+                print("@TODO: REVERSE QUERY")
 
         if self.verbose:
             print("\nDiscovery finished!\n---------------------------------\n")
@@ -138,24 +131,6 @@ class DiscoveryAlg:
             self.Q.put((edb_ref, edb_src))
             self.been_in_queue.add(edb_ref)
         return True
-
-    def resolve_secondary_id(self, edb_2nd_ref: EDB_REF):
-        # make an attempt to find primary EDB id from secondary id
-        if edb_id := self.mgr.resolve_secondary_id(*edb_2nd_ref):
-            edb_tag = edb_2nd_ref[0]
-            edb_ref = (edb_tag, depad_id(edb_id, edb_tag))
-            edb_2nd = (edb_tag+'_2nd', depad_id(edb_2nd_ref[1], edb_tag))
-            # put the primary ID in the queue again to be resolved
-            self.enqueue(edb_ref, edb_2nd)
-
-            # exclude secondary ids from output dataframe
-            ids = getattr(self.meta, edb_tag)
-            setattr(self.meta, edb_tag, ids - {edb_id})
-
-            self.secondary_ids.add((edb_tag, edb_id))
-
-            return True
-        return False
 
     def resolve_reverse_queries(self):
         """

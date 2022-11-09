@@ -6,14 +6,14 @@ from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
 @Mapping(ExternalDBEntity, MetaboliteConsistent)
-def edb2disco(mapper):
+def entity2consistent(mapper):
     mapper.for_member('names', lambda opt: opt.names)
 
     #mapper.for_member('description', lambda opt: {'any': opt.description})
 
 
 @Mapping(MetaboliteConsistent, ExternalDBEntity)
-def edb2disco(mapper):
+def consistent2entity(mapper):
     # @note: this mapping isn't really used
     mapper.for_member('names', lambda opt: opt.names)
 
