@@ -17,7 +17,7 @@ class EDBSource(Enum):
     chebi = 'chebi'
     hmdb = 'hmdb'
     kegg = 'kegg'
-    lipidmaps = 'lipidmaps'
+    lipmaps = 'lipmaps'
 
 """
 EDBs supported
@@ -36,7 +36,6 @@ def is_supported(reftag: str | tuple[str, str]):
 EDB_SOURCES_OTHER = { 'cas', 'chemspider', 'metlin', 'swisslipids' }
 
 # 'chembl_id',
-
 #   'metabolights_id',
 # 'chebi_id_alt', 'hmdb_id_alt', 'pubchem_sub_id',
 # #'pdb_id', 'uniprot_id',
@@ -49,3 +48,7 @@ List of EDB_IDs that are not yet supported by MFDB, but are well known
 Also includes non-metabolite refs, like protein DBs
 """
 EDB_ID_OTHER = set(map(lambda x: x+'_id', iter(EDB_SOURCES_OTHER)))
+
+EDB_ID = set(map(lambda x: x+'_id', iter(EDB_SOURCES)))
+EDB_ID.remove('lipmaps_id')
+EDB_ID.add('lipidmaps_id')

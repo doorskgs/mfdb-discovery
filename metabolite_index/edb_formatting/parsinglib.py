@@ -17,15 +17,6 @@ def _nil(var):
     return not bool(s)
 
 
-def strip_attr(v: list | set | str, prefix):
-    if not v:
-        return v
-
-    if isinstance(v, list):
-        return list(map(lambda v: v.removeprefix(prefix).lstrip(), v))
-    else:
-        return v.removeprefix(prefix).lstrip()
-
 
 def flatten(v: dict, attr):
     if attr in v and isinstance(v[attr], (list, tuple, set)):

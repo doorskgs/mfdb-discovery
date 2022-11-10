@@ -1,3 +1,4 @@
+from .consistency import get_discovery_class
 from .views.MetaboliteConsistent import MetaboliteConsistent
 from .views.MetaboliteDiscovery import MetaboliteDiscovery
 
@@ -10,6 +11,7 @@ from .mapping import entity2disco, entity2consistent, consistent2disco
 
 __all__ = [
     'DiscoveryAlg',
+    'get_discovery_class',
     'EDBSource',
     'EDB_SOURCES', 'EDB_ID_OTHER', 'COMMON_ATTRIBUTES',
     'MetaboliteDiscovery', 'MetaboliteConsistent'

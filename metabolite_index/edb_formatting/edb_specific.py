@@ -1,4 +1,5 @@
-from .parsinglib import force_flatten, try_flatten, strip_attr, handle_names, flatten
+from .padding import strip_prefixes
+from .parsinglib import force_flatten, try_flatten, handle_names, flatten
 from ..attributes import  EDB_SOURCES, EDB_ID_OTHER, COMMON_ATTRIBUTES
 from .structs import MultiDict
 
@@ -39,19 +40,6 @@ def map_to_edb_format(me: dict, important_attr: set):
     return out, dict(me)
 
 
-def split_pubchem_ids(r):
-    sids = []
-
-    if 'pubchem_id' in r:
-        if not isinstance(r['pubchem_id'], (list, tuple, set)):
-            r['pubchem_id'] = [strip_attr(r['pubchem_id'], 'CID:')]
-
-        # filter out substance IDs and flatten remaining IDs if possible
-        sids = list(filter(lambda x: x.startswith("SID:"), r['pubchem_id']))
-        r['pubchem_id'] = strip_attr(try_flatten(list(filter(lambda x: not x.startswith("SID:"), r['pubchem_id']))), 'CID:')
-
-    return sids
-
 
 def replace_obvious_hmdb_id(hmdb_id):
     if len(hmdb_id) == 9:
@@ -60,12 +48,14 @@ def replace_obvious_hmdb_id(hmdb_id):
     return hmdb_id
 
 def preprocess(data: dict):
+    """
+    Executes general EDB parsing that are needed for all major DBs
+    :param data:
+    :return:
+    """
     handle_names(data)
 
-    data['chebi_id'] = strip_attr(data['chebi_id'], 'CHEBI:')
-    data['hmdb_id'] = strip_attr(data['hmdb_id'], 'HMDB')
-    data['lipidmaps_id'] = strip_attr(data['lipidmaps_id'], 'LM')
-    data['inchi'] = strip_attr(data['inchi'], 'InChI=')
+    strip_prefixes(data)
 
     flatten(data, 'description')
 

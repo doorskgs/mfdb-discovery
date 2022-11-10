@@ -1,4 +1,4 @@
-from .attributes import COMMON_ATTRIBUTES, EDB_ID_OTHER, EDB_SOURCES
+from .attributes import COMMON_ATTRIBUTES, EDB_ID, EDB_SOURCES
 
 
 class DiscoveryOptions:
@@ -16,7 +16,6 @@ class DiscoveryOptions:
         """
         EDB IDs used to resolve
         """
-        self.edb_ids: set = set(map(lambda x: x+'_id', EDB_SOURCES))
-
+        self.edb_ids: set = EDB_ID
     def __hash__(self):
         return hash(self.edb_source)

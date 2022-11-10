@@ -2,7 +2,7 @@ import queue
 from collections import defaultdict
 
 from .DiscoveryOptions import DiscoveryOptions
-from .attributes import EDBSource, EDB_SOURCES, is_supported, COMMON_ATTRIBUTES
+from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_supported
 from .edb_formatting import parsinglib, depad_id
 from .managers.EDBManager import EDBManager
 from .views.MetaboliteDiscovery import MetaboliteDiscovery
@@ -10,7 +10,7 @@ from .views.MetaboliteDiscovery import MetaboliteDiscovery
 EDB_REF = tuple[str, str]
 QUEUE_ITEM = tuple[EDB_REF, EDB_REF]
 
-EDB_ID_ATTR = set(map(lambda x: x+'_id', EDB_SOURCES))
+EDB_ID_ATTR = set(map(lambda x: x+'_id', EDB_SOURCES | EDB_SOURCES_OTHER))
 
 
 class DiscoveryAlg:
@@ -44,7 +44,8 @@ class DiscoveryAlg:
         self.opts: dict[EDBSource, DiscoveryOptions] = defaultdict(DiscoveryOptions)
         self.verbose = False
         # What attributes to use for reversed lookup
-        self.reverse_lookup: set[str] = COMMON_ATTRIBUTES | EDB_ID_ATTR
+        self.reverse_lookup: set[str] = (EDB_ID_ATTR | {"inchikey", "smiles"}) - {"swisslipids_id"} #@TODO: @later bugfix hack
+        self.reverse_lookup_ran = False
 
         # Data sets used for
         self.Q = queue.Queue()
@@ -101,23 +102,29 @@ class DiscoveryAlg:
             self.meta.merge(edb_record)
             self.discovered.add(edb_ref)
 
-            # find novel EDB IDs and attribute references within this view
-            opts = self.get_opts(edb_ref[0])
-            for attr in opts.edb_ids | opts.attr:
-                val = depad_id(getattr(edb_record, attr), attr)
+            self.find_novel_ids(edb_ref, edb_record)
 
-                if val:
-                    edb_new = (attr, val)
-                    self.enqueue(edb_new, edb_ref)
-
-            if self.Q.empty():
-            #     # once we ran out of ids to explore, try reverse queries as a final attempt
-            #     self.resolve_reverse_queries()
-                print("@TODO: REVERSE QUERY")
+            if self.Q.empty() and not self.reverse_lookup_ran:
+                # once we ran out of ids to explore, try reverse queries as a final attempt
+                self.resolve_reverse_queries()
 
         if self.verbose:
             print("\nDiscovery finished!\n---------------------------------\n")
         assert self.Q.empty()
+
+    def find_novel_ids(self, edb_ref, edb_record):
+        found_new = False
+
+        # find novel EDB IDs and attribute references within this view
+        opts = self.get_opts(edb_ref[0])
+        for attr in opts.edb_ids | opts.attr:
+            val = depad_id(getattr(edb_record, attr), attr)
+
+            if val:
+                edb_new = (attr, val)
+                self.enqueue(edb_new, edb_ref)
+                found_new = True
+        return found_new
 
     def enqueue(self, edb_ref: EDB_REF, edb_src: EDB_REF):
 
@@ -140,20 +147,33 @@ class DiscoveryAlg:
         :return:
         """
         # missing ref value is empty list or sometimes None
-        reverse_attrs = filter(lambda at: not getattr(self.meta, at), self.reverse_lookup)
+        #reverse_attrs = list(filter(lambda at: not getattr(self.meta, at), self.reverse_lookup))
 
-        if reverse_attrs:
+        # @ TODO: rethink reverse queries, because this is BS
+        #       - execute at end of disco alg regardless of what attr is missing
+        #       - flag-reversed=T; reset this flag if novel entries are found
+        #       -
+        if self.verbose:
+            print('Reverse-querying', ', '.join(self.reverse_lookup))
+        self.reverse_lookup_ran = True
 
-            if self.verbose:
-                print('Reverse-querying', reverse_attrs)
+        edb_records = self.mgr.get_reverse(self.meta, *self.reverse_lookup)
 
-            edb_records = self.mgr.get_reverse(self.meta, *reverse_attrs)
+        for edb_record in edb_records:
+            self.meta.merge(edb_record)
 
-            if edb_records:
-                print(1, len(edb_records))
-            # for attr, val in zip(reverse_attrs, attr_values):
-            #     attr_ref = (attr, depad_id(val, attr))
-            #     self.enqueue(attr_ref, ('reverseq', '[]'))
+            edb_ref = (edb_record.edb_source, edb_record.edb_id)
+
+            found_new = self.find_novel_ids(edb_ref, edb_record)
+
+            if found_new:
+                # reset flag if we found at least one new ID
+                self.reverse_lookup_ran = False
+
+                if self.verbose:
+                    print("   revseq- ", *edb_ref)
+
+        return edb_records
 
     def get_opts(self, edb_source: str | EDBSource):
         if isinstance(edb_source, str):
@@ -165,6 +185,7 @@ class DiscoveryAlg:
         return self.opts[edb_source] if edb_source else DiscoveryOptions()
 
     def clear(self):
+        self.reverse_lookup_ran = False
         self.undiscovered.clear()
         self.secondary_ids.clear()
         self.ambiguous.clear()

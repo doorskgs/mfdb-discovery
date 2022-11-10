@@ -1,11 +1,25 @@
+from metabolite_index.edb_formatting.parsinglib import try_flatten
 
 _PADDINGS = {
     'hmdb_id': 'HMDB',
     'chebi_id': 'CHEBI:',
     #'kegg_id': 'C',
     'lipidmaps_id': 'LM',
+    'inchi': 'InChI='
 }
 
+def strip_attr(v: list | set | str, prefix):
+    if not v:
+        return v
+
+    if isinstance(v, list):
+        return list(map(lambda v: v.removeprefix(prefix).lstrip(), v))
+    else:
+        return v.removeprefix(prefix).lstrip()
+
+def strip_prefixes(data: dict):
+    for edb_tag, prefix in _PADDINGS.items():
+        data[edb_tag] = strip_attr(data[edb_tag], prefix)
 
 def guess_db(db_id: str):
     for db_tag, _pad in _PADDINGS.items():
@@ -62,3 +76,17 @@ def pad_id(db_id, db_tag):
         _id = padding+db_id
 
     return _id
+
+
+def split_pubchem_ids(r):
+    sids = []
+
+    if 'pubchem_id' in r:
+        if not isinstance(r['pubchem_id'], (list, tuple, set)):
+            r['pubchem_id'] = [strip_attr(r['pubchem_id'], 'CID:')]
+
+        # filter out substance IDs and flatten remaining IDs if possible
+        sids = list(filter(lambda x: x.startswith("SID:"), r['pubchem_id']))
+        r['pubchem_id'] = strip_attr(try_flatten(list(filter(lambda x: not x.startswith("SID:"), r['pubchem_id']))), 'CID:')
+
+    return sids

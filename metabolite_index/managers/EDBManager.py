@@ -56,27 +56,21 @@ class EDBManager:
 
         return edb_record
 
-    def get_reverse(self, neta: MetaboliteDiscovery, *edb_tags) -> list[MetaboliteConsistent]:
-        raise NotImplementedError("TOOD: reverse repo")
-        q = self.repo.select()
-        T = ExternalDBEntity# self.repo.T
+    def get_reverse(self, meta: MetaboliteDiscovery, *edb_tags) -> list[MetaboliteConsistent]:
+        q = self.repo.session.query(ExternalDBEntity)
 
         for edb_tag in edb_tags:
-            search_val = getattr(neta, edb_tag)
-
-            # if not search_val:
-            #     # skip where clause if there's no value to reverse query by
-            #     continue
-            #search_val =
+            search_val = getattr(meta, edb_tag)
+            _column = getattr(ExternalDBEntity, edb_tag)
 
             if isinstance(search_val, (set, list, tuple)):
                 # SQL IN
                 search_val = set(map(lambda x: depad_id(x, edb_tag), search_val))
-                q = q.filter(getattr(T, edb_tag).in_(search_val))
+                q = q.filter(_column.in_(search_val))
             else:
                 # scalar WHERE
                 search_val = depad_id(search_val, edb_tag)
-                q = q.filter(getattr(T, edb_tag) == search_val)
+                q = q.filter(_column == search_val)
             return q.all()
 
     def fetch_api(self, edb_tag, edb_id):
