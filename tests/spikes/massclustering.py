@@ -17,7 +17,8 @@ class MassClusteringTests(unittest.TestCase):
         # arrange
         random.shuffle(self.points)
 
-        clusters = cluster1d_fixed(self.points)
+        clusters = cluster1d_eps(self.points, eps=0.00005)
+        print(clusters)
 
         self.assertEqual(2, len(clusters))
 
@@ -27,7 +28,7 @@ class MassClusteringTests(unittest.TestCase):
 
         # act
         aes = AlmostEqualSet(self.points)
-        actual_repr_set = aes.get_set()
+        actual_repr_set = aes.get_set
 
         # assert
         expected_repr_set = {149.23284, 149.120449483}

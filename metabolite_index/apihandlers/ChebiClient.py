@@ -9,7 +9,7 @@ from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 class ChebiClient(ApiClientBase):
     _reverse = (
-        'pubchem_id', 'kegg_id', 'hmdb_id', 'lipidmaps_id',
+        'pubchem_id', 'kegg_id', 'hmdb_id', 'lipmaps_id',
     )
     _mapping = {edb_tag+' accession': edb_tag+'_id' for edb_tag in (EDB_SOURCES|EDB_SOURCES_OTHER)} | \
                {edb_tag+' registry number': edb_tag+'_id' for edb_tag in (EDB_SOURCES|EDB_SOURCES_OTHER)} | \

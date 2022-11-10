@@ -16,7 +16,7 @@ class ExternalDBEntity(EntityBase):
 
     chebi_id = Column(String(20))
     kegg_id = Column(String(20))
-    lipidmaps_id = Column(String(20))
+    lipmaps_id = Column(String(20))
     pubchem_id = Column(String(20))
     hmdb_id = Column(String(20))
 

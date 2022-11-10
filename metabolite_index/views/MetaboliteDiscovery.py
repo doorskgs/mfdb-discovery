@@ -13,7 +13,7 @@ class MetaboliteDiscovery:
 
     chebi_id: set[str] = field(default_factory=lambda: TrimSet(trimmer=lambda x: strip_attr(x, 'CHEBI:')))
     kegg_id: set[str] = field(default_factory=TrimSet)
-    lipidmaps_id: set[str] = field(default_factory=lambda: TrimSet(trimmer=lambda x: strip_attr(x, 'LM')))
+    lipmaps_id: set[str] = field(default_factory=lambda: TrimSet(trimmer=lambda x: strip_attr(x, 'LM')))
     pubchem_id: set[str] = field(default_factory=TrimSet)
     hmdb_id: set[str] = field(default_factory=lambda: TrimSet(trimmer=lambda x: strip_attr(x, 'HMDB')))
     cas_id: set[str] = field(default_factory=TrimSet)
@@ -39,11 +39,6 @@ class MetaboliteDiscovery:
         # @todo: policy to find primary_name ?
         return list(self.names)[0]
 
-    @property
-    def lipmaps_id(self):
-        # convenience property
-        return self.lipidmaps_id
-
     def merge(self, other):
         if isinstance(other, MetaboliteDiscovery):
             for attr in self.__dict__:
@@ -59,7 +54,7 @@ class MetaboliteDiscovery:
 
         repr_dict['hmdb_id'] = set(pad_id(s, 'hmdb_id') for s in repr_dict['hmdb_id'])
         repr_dict['chebi_id'] = set(pad_id(s, 'chebi_id') for s in repr_dict['chebi_id'])
-        repr_dict['lipidmaps_id'] = set(pad_id(s, 'lipidmaps_id') for s in repr_dict['lipidmaps_id'])
+        repr_dict['lipmaps_id'] = set(pad_id(s, 'lipmaps_id') for s in repr_dict['lipmaps_id'])
 
         consistencies = get_discovery_attribute_consistencies(self)
 

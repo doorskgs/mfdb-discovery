@@ -1,6 +1,6 @@
 from operator import itemgetter
 
-from metabolite_index.edb_formatting.cluster1d import cluster1d_eps, cluster1d_fixed, get_float_precision
+from metabolite_index.edb_formatting.cluster1d import get_float_precision, cluster1d_eps, get_common_min_precision
 
 
 class MultiDict(dict):
@@ -51,25 +51,38 @@ class TrimSet(set):
         return repr_trimset(self)
 
 class AlmostEqualSet(set):
-    def __init__(self, seq=(), eps=0.0005):
+    def __init__(self, seq=(), eps=None):
         super().__init__(seq)
         self.eps = eps
 
-    def get_set(self):
-        # cluster floats
-        clusters = cluster1d_fixed(self)
-        cluster_reprs = []
+    @property
+    def equivalence_set(self):
+        """
+        Gets representative float for each equivalence clusters (quantization buckets)
+        Clusters are formed using a float-precision dependent difference (epsilon). 1D float clustering algorithm
+        \n   ∀Ni,Nj ∈ cluster : Ni - Nj <= eps
+        :return:
+        """
+        if self.eps is None:
+            # eps diff scaling with the minimum flat precision of the set
+            min_prec = get_common_min_precision(self)
+            max_diff = pow(10, -min_prec + 1)
 
-        for cluster in clusters:
-            # get the float with the highest precision to represent the cluster:
-            prec = [(f,get_float_precision(f)) for f in cluster]
-            rf = max(prec, key=itemgetter(1))[0]
-            cluster_reprs.append(rf)
+            clusters = cluster1d_eps(self, eps=max_diff)
+        else:
+            clusters = cluster1d_eps(self, eps=self.eps)
 
-        return set(cluster_reprs)
+        return set(self.get_represent_for_cluster(c) for c in clusters)
 
-    def __repr__(self):
-        return repr(self.get_set())
+    @classmethod
+    def get_represent_for_cluster(cls, cluster):
+        # get the float with the highest precision to represent the cluster:
+        prec = [(f, get_float_precision(f)) for f in cluster]
+        rf = max(prec, key=itemgetter(1))[0]
+        return rf
+
+    # def __repr__(self):
+    #     return repr(self.get_set())
 
 
 def repr_trimset(s: set | TrimSet):

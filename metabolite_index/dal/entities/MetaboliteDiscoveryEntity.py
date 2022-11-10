@@ -11,7 +11,7 @@ class MetaboliteDiscoveryEntity(EntityBase):
 
     chebi_ids = Column(ARRAY(String(20)))
     kegg_ids = Column(ARRAY(String(24)))
-    lipidmaps_ids = Column(ARRAY(String(32)))
+    lipmaps_ids = Column(ARRAY(String(32)))
     pubchem_ids = Column(ARRAY(String(24)))
     hmdb_ids = Column(ARRAY(String(24)))
     cas_ids = Column(ARRAY(String(24)))
@@ -20,7 +20,7 @@ class MetaboliteDiscoveryEntity(EntityBase):
         self.meta_id = kwargs.get('meta_id')
         self.chebi_ids = kwargs.get('chebi_ids')
         self.kegg_ids = kwargs.get('kegg_ids')
-        self.lipidmaps_ids = kwargs.get('lipidmaps_ids')
+        self.lipmaps_ids = kwargs.get('lipmaps_ids')
         self.pubchem_ids = kwargs.get('pubchem_ids')
         self.hmdb_ids = kwargs.get('hmdb_ids')
         self.cas_ids = kwargs.get('cas_ids')

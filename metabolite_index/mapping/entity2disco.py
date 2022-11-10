@@ -19,7 +19,7 @@ def edb2disco(mapper):
 
     mapper.for_member('chebi_id', lambda opt: {opt.chebi_id} | extra_ref('chebi_id', opt))
     mapper.for_member('kegg_id', lambda opt: {opt.kegg_id} | extra_ref('kegg_id', opt))
-    mapper.for_member('lipidmaps_id', lambda opt: {opt.lipidmaps_id} | extra_ref('lipidmaps_id', opt))
+    mapper.for_member('lipmaps_id', lambda opt: {opt.lipmaps_id} | extra_ref('lipmaps_id', opt))
     mapper.for_member('pubchem_id', lambda opt: {opt.pubchem_id} | extra_ref('pubchem_id', opt))
     mapper.for_member('hmdb_id', lambda opt: {opt.hmdb_id} | extra_ref('hmdb_id', opt))
 
@@ -52,7 +52,7 @@ def disco2edb(mapper):
     mapper.for_member(ExternalDBEntity.edb_source, lambda opt: force_flatten(opt.edb_source, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.chebi_id, lambda opt: force_flatten(opt.chebi_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.kegg_id, lambda opt: force_flatten(opt.kegg_id, opt.attr_mul))
-    mapper.for_member(ExternalDBEntity.lipidmaps_id, lambda opt: force_flatten(opt.lipidmaps_id, opt.attr_mul))
+    mapper.for_member(ExternalDBEntity.lipmaps_id, lambda opt: force_flatten(opt.lipmaps_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.pubchem_id, lambda opt: force_flatten(opt.pubchem_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.hmdb_id, lambda opt: force_flatten(opt.hmdb_id, opt.attr_mul))
 

@@ -4,7 +4,7 @@ _PADDINGS = {
     'hmdb_id': 'HMDB',
     'chebi_id': 'CHEBI:',
     #'kegg_id': 'C',
-    'lipidmaps_id': 'LM',
+    'lipmaps_id': 'LM',
     'inchi': 'InChI='
 }
 
@@ -44,7 +44,7 @@ def id_to_url(db_id, db_tag=None):
         url = f"https://www.genome.jp/dbget-bin/www_bget?cpd:{db_id}"
     elif db_tag == 'pubchem_id':
         url = f"https://pubchem.ncbi.nlm.nih.gov/compound/{db_id}"
-    elif db_tag == 'lipidmaps_id':
+    elif db_tag == 'lipmaps_id':
         url = f"https://www.lipidmaps.org/data/LMSDRecord.php?LMID={db_id}"
 
     return url

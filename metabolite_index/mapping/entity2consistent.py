@@ -21,7 +21,7 @@ def consistent2entity(mapper):
     mapper.for_member('edb_source', ExternalDBEntity.edb_source)
     mapper.for_member('chebi_id', ExternalDBEntity.chebi_id)
     mapper.for_member('kegg_id', ExternalDBEntity.kegg_id)
-    mapper.for_member('lipidmaps_id', ExternalDBEntity.lipidmaps_id)
+    mapper.for_member('lipmaps_id', ExternalDBEntity.lipmaps_id)
     mapper.for_member('pubchem_id', ExternalDBEntity.pubchem_id)
     mapper.for_member('hmdb_id', ExternalDBEntity.hmdb_id)
 

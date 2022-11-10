@@ -15,7 +15,7 @@ class LipidmapsClient(ApiClientBase):
     }
 
     def fetch_api(self, edb_id):
-        url = f'https://www.lipidmaps.org/rest/compound/lm_id/{pad_id(edb_id, "lipidmaps_id")}/all/'
+        url = f'https://www.lipidmaps.org/rest/compound/lm_id/{pad_id(edb_id, "lipmaps_id")}/all/'
         r = requests.get(url=url)
 
         data = r.json()

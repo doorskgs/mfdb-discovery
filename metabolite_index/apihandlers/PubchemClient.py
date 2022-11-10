@@ -80,7 +80,7 @@ def parse_pubchem(edb_id, content, cont_refs, _mapping):
         elif 'lipidmaps.org' in link:
             # http://www.lipidmaps.org/data/LMSDRecord.php?LM_ID=LMFA07070002
             db_id = link.lower().split('lm_id=')[1].upper()
-            data.append('lipidmaps_id', db_id)
+            data.append('lipmaps_id', db_id)
         elif 'hmdb.ca' in link:
             # http://www.hmdb.ca/metabolites/HMDB0000791
             db_id = link.split('metabolites/')[1].upper()

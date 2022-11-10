@@ -50,5 +50,3 @@ Also includes non-metabolite refs, like protein DBs
 EDB_ID_OTHER = set(map(lambda x: x+'_id', iter(EDB_SOURCES_OTHER)))
 
 EDB_ID = set(map(lambda x: x+'_id', iter(EDB_SOURCES)))
-EDB_ID.remove('lipmaps_id')
-EDB_ID.add('lipidmaps_id')

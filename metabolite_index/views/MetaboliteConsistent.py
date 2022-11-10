@@ -13,7 +13,7 @@ class MetaboliteConsistent:
 
     chebi_id: str = None
     kegg_id: str = None
-    lipidmaps_id: str = None
+    lipmaps_id: str = None
     pubchem_id: str = None
     hmdb_id: str = None
 
@@ -48,7 +48,7 @@ class MetaboliteConsistent:
         elif self.edb_source == 'hmdb':
             return self.hmdb_id
         elif self.edb_source == 'lipmaps' or self.edb_source == 'lipidmaps':
-            return self.lipidmaps_id
+            return self.lipmaps_id
         elif self.edb_source == 'kegg':
             return self.kegg_id
         elif self.edb_source == 'pubchem':

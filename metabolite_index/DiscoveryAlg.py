@@ -1,5 +1,6 @@
 import queue
 from collections import defaultdict
+import math
 
 from .DiscoveryOptions import DiscoveryOptions
 from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_supported
@@ -75,6 +76,8 @@ class DiscoveryAlg:
             edb_id = parsinglib.try_flatten(getattr(meta, edb_tag))
 
             if edb_id:
+                if self.verbose:
+                    print("Adding input:", edb_id, edb_tag)
                 edb_id = depad_id(edb_id, edb_tag)
                 self.enqueue((edb_tag, edb_id), ("root_input", "-"))
 
@@ -99,6 +102,8 @@ class DiscoveryAlg:
                 continue
 
             # edb record was discovered, add it to previously discovered data:
+            if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
+                print("NAN MASS: ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
             self.meta.merge(edb_record)
             self.discovered.add(edb_ref)
 
@@ -160,6 +165,8 @@ class DiscoveryAlg:
         edb_records = self.mgr.get_reverse(self.meta, *self.reverse_lookup)
 
         for edb_record in edb_records:
+            if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
+                print("NAN MASS(rev): ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
             self.meta.merge(edb_record)
 
             edb_ref = (edb_record.edb_source, edb_record.edb_id)

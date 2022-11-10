@@ -18,7 +18,7 @@ class KeggClient(ApiClientBase):
 
     _reverse = (
         'chebi_id',
-        'lipidmaps_id',
+        'lipmaps_id',
         # 'pubchem_id'
     )
 
