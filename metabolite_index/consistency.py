@@ -23,7 +23,7 @@ def get_strict_consistency(s):
     :param s:
     :return:
     """
-    l = len(s)
+    l = len(s) if not hasattr(s, 'equivalence_set') else len(s.equivalence_set)
     if l == 1: return ConsistencyClass.Consistent
     elif l == 0: return ConsistencyClass.Missing
     return ConsistencyClass.Inconsistent
@@ -34,7 +34,7 @@ def get_light_consistency(s):
     :param s:
     :return:
     """
-    l = len(s)
+    l = len(s) if not hasattr(s, 'equivalence_set') else len(s.equivalence_set)
     if l == 1 or l == 0: return ConsistencyClass.Consistent
     return ConsistencyClass.Inconsistent
 
@@ -50,7 +50,7 @@ def get_discovery_attribute_consistencies(meta) -> dict[str, ConsistencyClass]:
 
     return attr_consistencies
 
-def get_discovery_class(meta):
+def get_consistency_class(meta):
     c_mass = ConsistencyClass.NONE
     c_edb_ids = ConsistencyClass.NONE
     c_master_ids = ConsistencyClass.NONE

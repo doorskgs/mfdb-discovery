@@ -6,7 +6,7 @@ from eme.data_access import get_repo
 from eme.pipe.utils import print_progress
 
 from metabolite_index import DiscoveryAlg
-from metabolite_index.consistency import get_discovery_class, ConsistencyClass
+from metabolite_index.consistency import get_consistency_class, ConsistencyClass
 from metabolite_index.dal import ctx, ExternalDBEntity, EDBRepository
 from metabolite_index.views.MetaboliteDiscovery import MetaboliteDiscovery
 
@@ -37,7 +37,7 @@ def main():
         # todo: itt: make table count of inconsistent for all 25k chebi records
         # todo: itt: then try with various clustering algs
 
-        cmain, cid, cm = get_discovery_class(meta)
+        cmain, cid, cm = get_consistency_class(meta)
         if cmain == ConsistencyClass.Consistent and cid == ConsistencyClass.Consistent:
             fh1.write(','.join(list(meta.chebi_id)))
             fh1.write(';')

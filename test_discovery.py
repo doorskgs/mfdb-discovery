@@ -1,3 +1,5 @@
+import os.path
+
 import metabolite_index as mi
 
 """
@@ -6,19 +8,18 @@ MFDB-Discovery has convenience methods to configure the algorithm in another pac
 """
 
 # Configure
-disco = mi.DiscoveryAlg()
-disco.verbose = True
-
-# ATP
-disco.clear()
-meta = mi.MetaboliteDiscovery()
-meta.chebi_id.add('CHEBI:185024')
-disco.add_input(meta, mi.EDBSource.hmdb)
+path = os.path.dirname(__file__)
+disco = mi.discovery(path+'/test_discovery.ini', verbose=True)
 
 # run
+meta = disco.add_scalar_input(mi.EDBSource.chebi, 'CHEBI:40938')
 disco.run_discovery()
 
-c_master_ids, c_edb_ids, c_mass = mi.get_discovery_class(meta)
-
+# evaluate
+c_master_ids, c_edb_ids, c_mass = mi.get_consistency_class(meta)
 print(c_master_ids, c_edb_ids, c_mass)
 print(repr(meta))
+print("Found 2nd IDs:", disco.secondary_ids)
+print("Discovered:", disco.discovered)
+print("Undiscovered:", disco.undiscovered)
+print("Ambiguous:", disco.ambiguous)

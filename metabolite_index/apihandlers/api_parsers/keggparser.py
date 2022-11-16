@@ -51,6 +51,8 @@ def parse_kegg(edb_id, content):
             for edb_id in ref_ids.split(" "):
                 _refs.append(db_tag, edb_id)
         else:
+            if state.lower() in ('exact_mass', 'mol_weight', 'charge') and line:
+                line = float(line)
             data.append(state.lower(), line)
 
     # todo: parse rest of file ?

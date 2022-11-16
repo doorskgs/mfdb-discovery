@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
 from metabolite_index.consistency import get_discovery_attribute_consistencies, ConsistencyClass
-from metabolite_index.edb_formatting.structs import repr_trimset
-from metabolite_index.edb_formatting import TrimSet, strip_attr, pad_id
+from metabolite_index.edb_formatting.structs import repr_set, AlmostEqualSet, TrimSet
+from metabolite_index.edb_formatting import strip_attr, pad_id
 from eme.mapper import map_to
 
 
@@ -29,8 +29,8 @@ class MetaboliteDiscovery:
 
     # mass
     charge: set[float] = field(default_factory=TrimSet)
-    mass: set[float] = field(default_factory=TrimSet)
-    mi_mass: set[float] = field(default_factory=TrimSet)
+    mass: set[float] = field(default_factory=AlmostEqualSet)
+    mi_mass: set[float] = field(default_factory=AlmostEqualSet)
 
     description: dict[str, str] = field(default_factory=dict)
 
@@ -56,11 +56,14 @@ class MetaboliteDiscovery:
         repr_dict['chebi_id'] = set(pad_id(s, 'chebi_id') for s in repr_dict['chebi_id'])
         repr_dict['lipmaps_id'] = set(pad_id(s, 'lipmaps_id') for s in repr_dict['lipmaps_id'])
 
+        repr_dict['mass'] = repr_dict['mass'].equivalence_set
+        repr_dict['mi_mass'] = repr_dict['mi_mass'].equivalence_set
+
         consistencies = get_discovery_attribute_consistencies(self)
 
         for attr, vals in repr_dict.items():
             c = consistencies.get(attr, ConsistencyClass.Consistent)
 
-            sb.append(f'  {attr:<16}: {str(c)} {repr_trimset(vals)}')
+            sb.append(f'  {attr:<16}: {str(c)} {repr_set(vals)}')
 
         return '\n'.join(sb)

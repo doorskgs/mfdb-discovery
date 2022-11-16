@@ -48,7 +48,7 @@ class TrimSet(set):
             super().update(_updated_set)
 
     def __repr__(self):
-        return repr_trimset(self)
+        return repr_set(self)
 
 class AlmostEqualSet(set):
     def __init__(self, seq=(), eps=None):
@@ -81,11 +81,11 @@ class AlmostEqualSet(set):
         rf = max(prec, key=itemgetter(1))[0]
         return rf
 
-    # def __repr__(self):
-    #     return repr(self.get_set())
+    def __repr__(self):
+        return repr_set(self.equivalence_set)
 
 
-def repr_trimset(s: set | TrimSet):
+def repr_set(s: set | TrimSet):
     if hasattr(s, 'trimmer') and s.trimmer:
         trimmer = lambda x: s.trimmer(str(x))
     else:

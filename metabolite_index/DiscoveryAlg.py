@@ -6,12 +6,11 @@ from .DiscoveryOptions import DiscoveryOptions
 from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_supported
 from .edb_formatting import parsinglib, depad_id
 from .managers.EDBManager import EDBManager
+from .managers.OptionsManager import OptionsManager
 from .views.MetaboliteDiscovery import MetaboliteDiscovery
 
 EDB_REF = tuple[str, str]
 QUEUE_ITEM = tuple[EDB_REF, EDB_REF]
-
-EDB_ID_ATTR = set(map(lambda x: x+'_id', EDB_SOURCES | EDB_SOURCES_OTHER))
 
 
 class DiscoveryAlg:
@@ -42,44 +41,25 @@ class DiscoveryAlg:
 
     def __init__(self):
         # Discovery options defined for each EDB source
-        self.opts: dict[EDBSource, DiscoveryOptions] = defaultdict(DiscoveryOptions)
         self.verbose = False
-        # What attributes to use for reversed lookup
-        self.reverse_lookup: set[str] = (EDB_ID_ATTR | {"inchikey", "smiles"}) - {"swisslipids_id"} #@TODO: @later bugfix hack
-        self.reverse_lookup_ran = False
+        self.reverse_lookup: set[str] = set()
+        self.discoverable_attributes: set[str] = set()
 
-        # Data sets used for
+        # Data sets and state variables used for the algorithm
         self.Q = queue.Queue()
         self.undiscovered = set()
         self.secondary_ids = set()
         self.ambiguous = []
         self.discovered = set()
         self.been_in_queue = set()
+        self.reverse_lookup_ran = False
 
         # main object to aggregate EDB sources
         self.meta: MetaboliteDiscovery | None = None
 
-        self.mgr = EDBManager(self.secondary_ids)
-
-    def add_input(self, meta: MetaboliteDiscovery, edb_source: EDBSource = None):
-        """
-        Adds fields of input MetaboliteDiscovery view to the resolve queue
-        :param meta: metabolite discovery object
-        :param edb_source: EDB source tag (e.g. pubchem)
-        :return:
-        """
-        # attributes to resolve
-        opts = self.get_opts(edb_source)
-        self.meta = meta
-
-        for edb_tag in opts.edb_ids:
-            edb_id = parsinglib.try_flatten(getattr(meta, edb_tag))
-
-            if edb_id:
-                if self.verbose:
-                    print("Adding input:", edb_id, edb_tag)
-                edb_id = depad_id(edb_id, edb_tag)
-                self.enqueue((edb_tag, edb_id), ("root_input", "-"))
+        # EDB manager
+        self.opts = OptionsManager()
+        self.mgr = EDBManager(self.secondary_ids, self.opts)
 
     def run_discovery(self):
         """
@@ -113,16 +93,14 @@ class DiscoveryAlg:
                 # once we ran out of ids to explore, try reverse queries as a final attempt
                 self.resolve_reverse_queries()
 
-        if self.verbose:
-            print("\nDiscovery finished!\n---------------------------------\n")
-        assert self.Q.empty()
+        return self.finish_discovery()
 
     def find_novel_ids(self, edb_ref, edb_record):
         found_new = False
 
         # find novel EDB IDs and attribute references within this view
-        opts = self.get_opts(edb_ref[0])
-        for attr in opts.edb_ids | opts.attr:
+        opts = self.opts.get_opts(edb_ref[0])
+        for attr in self.discoverable_attributes:
             val = depad_id(getattr(edb_record, attr), attr)
 
             if val:
@@ -153,11 +131,9 @@ class DiscoveryAlg:
         """
         # missing ref value is empty list or sometimes None
         #reverse_attrs = list(filter(lambda at: not getattr(self.meta, at), self.reverse_lookup))
+        if not self.reverse_lookup:
+            return
 
-        # @ TODO: rethink reverse queries, because this is BS
-        #       - execute at end of disco alg regardless of what attr is missing
-        #       - flag-reversed=T; reset this flag if novel entries are found
-        #       -
         if self.verbose:
             print('Reverse-querying', ', '.join(self.reverse_lookup))
         self.reverse_lookup_ran = True
@@ -182,14 +158,45 @@ class DiscoveryAlg:
 
         return edb_records
 
-    def get_opts(self, edb_source: str | EDBSource):
-        if isinstance(edb_source, str):
-            if edb_source.endswith('_id'):
-                edb_source = edb_source[:-3]
+    def finish_discovery(self):
+        assert self.Q.empty()
 
-            edb_source = EDBSource(edb_source)
+        # remove secondary IDs from discovery result
+        for edb_tag, edb_id in self.secondary_ids:
+            s: set = getattr(self.meta, edb_tag)
+            s.remove(edb_id)
 
-        return self.opts[edb_source] if edb_source else DiscoveryOptions()
+        # todo: @later: clear and return an object representing all the data
+        #self.clear()
+
+        if self.verbose:
+            print("\nDiscovery finished!\n---------------------------------\n")
+
+    def add_input(self, meta: MetaboliteDiscovery, edb_source: EDBSource = None):
+        """
+        Adds fields of input MetaboliteDiscovery view to the resolve queue
+        :param meta: metabolite discovery object
+        :param edb_source: EDB source tag (e.g. pubchem)
+        :return:
+        """
+        # attributes to resolve
+        opts = self.opts.get_opts(edb_source)
+        self.meta = meta
+
+        for edb_tag in self.discoverable_attributes:
+            edb_id = parsinglib.try_flatten(getattr(meta, edb_tag))
+
+            if edb_id:
+                if self.verbose:
+                    print("Adding input:", edb_id, edb_tag)
+                edb_id = depad_id(edb_id, edb_tag)
+                self.enqueue((edb_tag, edb_id), ("root_input", "-"))
+
+    def add_scalar_input(self, edb_source: EDBSource, edb_id):
+        meta = MetaboliteDiscovery()
+        getattr(meta, edb_source.value+'_id').add(edb_id)
+        self.add_input(meta, edb_source)
+        return self.meta
 
     def clear(self):
         self.reverse_lookup_ran = False

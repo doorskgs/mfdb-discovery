@@ -19,7 +19,8 @@ def strip_attr(v: list | set | str, prefix):
 
 def strip_prefixes(data: dict):
     for edb_tag, prefix in _PADDINGS.items():
-        data[edb_tag] = strip_attr(data[edb_tag], prefix)
+        if edb_tag in data:
+            data[edb_tag] = strip_attr(data[edb_tag], prefix)
 
 def guess_db(db_id: str):
     for db_tag, _pad in _PADDINGS.items():
