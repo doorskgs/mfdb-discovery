@@ -1,6 +1,7 @@
 from enum import IntFlag
 
-from metabolite_index.attributes import EDB_ID_OTHER, EDB_ID
+from .attributes import EDB_ID_OTHER, EDB_ID
+from .views.MetaboliteConsistent import MetaboliteConsistent
 
 class ConsistencyClass(IntFlag):
     NONE = 0

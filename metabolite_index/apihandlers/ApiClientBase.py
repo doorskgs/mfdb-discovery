@@ -1,10 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..dal import ExternalDBEntity
 
 
 class ApiClientBase(metaclass=ABCMeta):
 
     @abstractmethod
-    def fetch_api(self, edb_id) -> MetaboliteConsistent:
+    def fetch_api(self, edb_id) -> ExternalDBEntity:
         pass

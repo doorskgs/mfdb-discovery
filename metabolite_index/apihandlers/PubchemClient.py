@@ -4,7 +4,7 @@ import requests
 
 from .ApiClientBase import ApiClientBase
 from ..edb_formatting import preprocess, map_to_edb_format, remap_keys, MultiDict
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..dal import ExternalDBEntity
 
 
 class PubchemClient(ApiClientBase):
@@ -44,10 +44,10 @@ class PubchemClient(ApiClientBase):
 
         remap_keys(data, self._mapping)
         preprocess(data)
-        data, etc = map_to_edb_format(data, important_attr=self._important_attr, edb_format=None, exclude_etc={None})
+        data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
         data['edb_source'] = 'pubchem'
-        return MetaboliteConsistent(**data)
+        return ExternalDBEntity(**data)
 
 
 def parse_pubchem(edb_id, content, cont_refs, _mapping):

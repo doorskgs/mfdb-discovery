@@ -7,15 +7,19 @@ from ..views.MetaboliteDiscovery import MetaboliteDiscovery
 
 @Mapping(ExternalDBEntity, MetaboliteDiscovery)
 def edb2disco(mapper):
-    mapper.for_member('names', lambda opt: opt.names)
-
+    """
+    Maps EDB Entity to Discovery (used in discovery cache)
+    :param mapper:
+    :return:
+    """
     # todO: @later: add description into JSON like {edb_source -> descript}
-    mapper.for_member('description', lambda opt: {'any': opt.description})
+    # todo: store attr other in MetaboliteDiscovery?
 
     def extra_ref(n, opt):
         return set(opt.attr_mul.get(n, []))
 
-    # todo: store attr other in MetaboliteDiscovery?
+    mapper.for_member('names', lambda opt: opt.names)
+    mapper.for_member('description', lambda opt: {'any': opt.description})
 
     mapper.for_member('chebi_id', lambda opt: {opt.chebi_id} | extra_ref('chebi_id', opt))
     mapper.for_member('kegg_id', lambda opt: {opt.kegg_id} | extra_ref('kegg_id', opt))
@@ -27,7 +31,6 @@ def edb2disco(mapper):
     mapper.for_member('chemspider_id', lambda opt: {opt.chemspider_id} | extra_ref('chemspider_id', opt))
     mapper.for_member('metlin_id', lambda opt: {opt.metlin_id} | extra_ref('metlin_id', opt))
 
-    #mapper.for_member('mol', lambda opt: {opt.mol} | extra_ref('mol', opt))
     mapper.for_member('formula', lambda opt: {opt.formula} | extra_ref('formula', opt))
     mapper.for_member('inchi', lambda opt: {opt.inchi} | extra_ref('inchi', opt))
     mapper.for_member('inchikey', lambda opt: {opt.inchikey} | extra_ref('inchikey', opt))
@@ -42,7 +45,8 @@ def edb2disco(mapper):
 
 @Mapping(MetaboliteDiscovery, ExternalDBEntity)
 def disco2edb(mapper):
-    # @note: this mapping isn't really used
+    #@UNUSED
+    return
 
     # mapper.for_member(ExternalDBEntity.names, lambda opt: set(json.loads(opt)))
     # todo: handle description later
@@ -50,6 +54,7 @@ def disco2edb(mapper):
 
     mapper.for_member(ExternalDBEntity.edb_id, lambda opt: force_flatten(opt.edb_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.edb_source, lambda opt: force_flatten(opt.edb_source, opt.attr_mul))
+
     mapper.for_member(ExternalDBEntity.chebi_id, lambda opt: force_flatten(opt.chebi_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.kegg_id, lambda opt: force_flatten(opt.kegg_id, opt.attr_mul))
     mapper.for_member(ExternalDBEntity.lipmaps_id, lambda opt: force_flatten(opt.lipmaps_id, opt.attr_mul))

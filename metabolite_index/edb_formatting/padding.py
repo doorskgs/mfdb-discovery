@@ -1,4 +1,4 @@
-from metabolite_index.edb_formatting.parsinglib import try_flatten
+from .parsinglib import try_flatten
 
 _PADDINGS = {
     'hmdb_id': 'HMDB',
@@ -61,10 +61,8 @@ def depad_id(db_id, db_tag=None):
         if db_tag is None:
             raise Exception("db_tag not provided for depad_id. How couldst i depad yond hast mere db tag?")
 
-    padding = _PADDINGS.get(db_tag)
+    db_id = db_id.removeprefix(_PADDINGS.get(db_tag, ""))
 
-    if padding is not None and db_id.startswith(padding):
-        return db_id[len(padding):]
     return db_id
 
 

@@ -4,7 +4,7 @@ from .sqlbase import EntityBase
 
 
 class MetaboliteDiscoveryEntity(EntityBase):
-    __tablename__ = 'mdb'
+    __tablename__ = 'mdb_inconsistent'
 
     # Primary Ids
     meta_id = Column(String(20), primary_key=True)

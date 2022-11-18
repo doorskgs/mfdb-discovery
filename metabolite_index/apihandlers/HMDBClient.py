@@ -3,8 +3,8 @@ from io import StringIO, BytesIO
 import xml.etree.ElementTree as ET
 
 from .ApiClientBase import ApiClientBase
-from ..edb_formatting import pad_id, preprocess, remap_keys, map_to_edb_format
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..edb_formatting import pad_id, preprocess, remap_keys, map_to_edb_format, replace_obvious_hmdb_id
+from ..dal import ExternalDBEntity
 
 
 class HMDBClient(ApiClientBase):
@@ -64,4 +64,4 @@ class HMDBClient(ApiClientBase):
         data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
         data['edb_source'] = 'hmdb'
-        return MetaboliteConsistent(**data)
+        return ExternalDBEntity(**data)

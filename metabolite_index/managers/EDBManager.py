@@ -1,7 +1,6 @@
 from eme.data_access import get_repo
 from eme.mapper import map_to
 
-from ..DiscoveryOptions import DiscoveryOptions
 from ..apihandlers.ApiClientBase import ApiClientBase
 from ..apihandlers.ChebiClient import ChebiClient
 from ..apihandlers.KeggClient import KeggClient
@@ -10,8 +9,7 @@ from ..apihandlers.HMDBClient import HMDBClient
 from ..apihandlers.LipidmapsClient import LipidmapsClient
 
 from ..dal import EDBRepository, SecondaryIDRepository, ExternalDBEntity, SecondaryID
-from ..edb_formatting import pad_id, depad_id
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..edb_formatting import pad_id, depad_id, replace_obvious_hmdb_id
 from ..views.MetaboliteDiscovery import MetaboliteDiscovery
 
 
@@ -36,17 +34,22 @@ class EDBManager:
         self.secondary_ids = secondary_ids
         self.opts = opts
 
-    def get_metabolite(self, edb_tag: str, edb_id: str) -> MetaboliteConsistent:
+    def get_metabolite(self, edb_tag: str, edb_id: str) -> ExternalDBEntity:
         """
 
         :param edb_tag:
         :param edb_id:
         :return:
         """
-        edb_record: MetaboliteConsistent | None = None
+        edb_record: ExternalDBEntity | None = None
 
-        edb_source = edb_tag[:-3] if edb_tag.endswith('_id') else edb_tag
+        edb_source = edb_tag.removesuffix('_id')
         opts = self.opts.get_opts(edb_source)
+
+        if edb_source == 'hmdb':
+            # pad hmdb id with 00, so that obvious secondary IDs are also found in DB
+            #       (both formats are guaranteed for api fetch)
+            edb_id = replace_obvious_hmdb_id(edb_id)
 
         if opts.cache_enabled:
             # find by edb table
@@ -63,7 +66,7 @@ class EDBManager:
 
         return edb_record
 
-    def get_reverse(self, meta: MetaboliteDiscovery, *edb_tags) -> list[MetaboliteConsistent]:
+    def get_reverse(self, meta: ExternalDBEntity | MetaboliteDiscovery, *edb_tags) -> list[ExternalDBEntity]:
         """
 
         :param meta:
@@ -97,19 +100,17 @@ class EDBManager:
 
         edb_id_padded = pad_id(edb_id, edb_tag)
         print(f"  Fetching {edb_tag} API: {edb_id_padded}")
-        edb_api = self.apis[edb_tag].fetch_api(edb_id_padded)
+        edb_record: ExternalDBEntity = self.apis[edb_tag].fetch_api(edb_id_padded)
 
-        if edb_api and save_in_cache:
-            # save api results to table
-            # cache record; need to convert to EDB entity for SqlAlchemy
-            assert edb_id == edb_api.edb_id and edb_tag == edb_api.edb_source
-            edb_record = map_to(edb_api, ExternalDBEntity)
-            assert edb_id == edb_record.edb_id and edb_tag == edb_record.edb_source
+        # map to edb_record
+        #edb_record: ExternalDBEntity = map_to(edb_api, ExternalDBEntity)
+        # Metabolite Consistent lacks edb id & source, so we manually add this after the mapping
+        # edb_record.edb_id = edb_id
+        # edb_record.edb_source = edb_tag.removesuffix('_id')
 
+        if edb_record and save_in_cache:
+            # cache api results to table
             self.repo.create(edb_record)
-        else:
-            # the two classes are interchangeable
-            edb_record = edb_api
 
         return edb_record
 

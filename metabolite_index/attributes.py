@@ -28,8 +28,7 @@ def is_supported(reftag: str | tuple[str, str]):
     if isinstance(reftag, tuple) and len(reftag)==2:
         reftag = reftag[0]
 
-    if reftag.endswith('_id'):
-        reftag = reftag[:-3]
+    reftag = reftag.lower().removesuffix('_id')
 
     return reftag in EDB_SOURCES
 

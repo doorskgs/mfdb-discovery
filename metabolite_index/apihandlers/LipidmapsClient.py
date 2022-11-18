@@ -2,7 +2,7 @@ import requests
 
 from .ApiClientBase import ApiClientBase
 from ..edb_formatting import pad_id, remap_keys, preprocess, map_to_edb_format
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..dal import ExternalDBEntity
 
 
 class LipidmapsClient(ApiClientBase):
@@ -25,4 +25,4 @@ class LipidmapsClient(ApiClientBase):
         data, etc = map_to_edb_format(data, important_attr=self._important_attr, edb_format=None, exclude_etc={None})
 
         data['edb_source'] = 'lipmaps'
-        return MetaboliteConsistent(**data)
+        return ExternalDBEntity(**data)

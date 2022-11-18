@@ -6,10 +6,14 @@ from ..dal.entities.MetaboliteDBEntity import MetaboliteDBEntity
 
 @Mapping(ExternalDBEntity, MetaboliteDBEntity)
 def edb2mdb(mapper):
+    #@UNUSED
+    raise NotImplementedError()
+
     mapper.for_member(ExternalDBEntity.names, MetaboliteDBEntity.names)
 
     mapper.for_member(ExternalDBEntity.edb_id, MetaboliteDBEntity.edb_id)
     mapper.for_member(ExternalDBEntity.edb_source, MetaboliteDBEntity.edb_source)
+
     mapper.for_member(ExternalDBEntity.chebi_id, MetaboliteDBEntity.chebi_id)
     mapper.for_member(ExternalDBEntity.kegg_id, MetaboliteDBEntity.kegg_id)
     mapper.for_member(ExternalDBEntity.lipmaps_id, MetaboliteDBEntity.lipmaps_id)
@@ -34,10 +38,14 @@ def edb2mdb(mapper):
 
 @Mapping(MetaboliteDBEntity, ExternalDBEntity)
 def mdb2edb(mapper):
+    #@UNUSED
+    raise NotImplementedError()
+
     mapper.for_member(MetaboliteDBEntity.names, ExternalDBEntity.names)
 
     mapper.for_member(MetaboliteDBEntity.edb_id, ExternalDBEntity.edb_id)
     mapper.for_member(MetaboliteDBEntity.edb_source, ExternalDBEntity.edb_source)
+
     mapper.for_member(MetaboliteDBEntity.chebi_id, ExternalDBEntity.chebi_id)
     mapper.for_member(MetaboliteDBEntity.kegg_id, ExternalDBEntity.kegg_id)
     mapper.for_member(MetaboliteDBEntity.lipmaps_id, ExternalDBEntity.lipmaps_id)

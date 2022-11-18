@@ -72,7 +72,7 @@ class DiscoveryAlg:
 
             # Query metabolite record from local database or web api
             if self.verbose:
-                print(f"{edb_src[0]}[{edb_src[1]}] -> {edb_ref[0]}[{edb_ref[1]}]")
+                print(f"  {edb_src[0]}[{edb_src[1]}] -> {edb_ref[0]}[{edb_ref[1]}]")
 
             # todo: @ITT: BUG edb_id is the SOURCE id not the explorable one!!!!!
             edb_record = self.mgr.get_metabolite(*edb_ref)
@@ -82,8 +82,8 @@ class DiscoveryAlg:
                 continue
 
             # edb record was discovered, add it to previously discovered data:
-            if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
-                print("NAN MASS: ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
+            # if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
+            #     print("NAN MASS: ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
             self.meta.merge(edb_record)
             self.discovered.add(edb_ref)
 
@@ -188,7 +188,7 @@ class DiscoveryAlg:
 
             if edb_id:
                 if self.verbose:
-                    print("Adding input:", edb_id, edb_tag)
+                    print("  Adding input:", edb_id, edb_tag)
                 edb_id = depad_id(edb_id, edb_tag)
                 self.enqueue((edb_tag, edb_id), ("root_input", "-"))
 
@@ -199,9 +199,11 @@ class DiscoveryAlg:
         return self.meta
 
     def clear(self):
-        self.reverse_lookup_ran = False
+        self.Q = queue.Queue()
+
         self.undiscovered.clear()
         self.secondary_ids.clear()
         self.ambiguous.clear()
-        self.Q = queue.Queue()
         self.discovered.clear()
+        self.been_in_queue.clear()
+        self.reverse_lookup_ran = False

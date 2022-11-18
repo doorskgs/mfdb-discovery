@@ -10,7 +10,6 @@ class OptionsManager:
         if isinstance(edb_source, EDBSource):
             edb_source = edb_source.value
 
-        if edb_source.endswith('_id'):
-            edb_source = edb_source[:-3]
+        edb_source = edb_source.removesuffix('_id')
 
         return self.opts.get(edb_source, DiscoveryOptions())

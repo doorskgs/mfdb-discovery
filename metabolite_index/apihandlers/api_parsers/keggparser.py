@@ -43,10 +43,7 @@ def parse_kegg(edb_id, content):
         elif 'DBLINKS' == state:
             # foreign references:
             db_tag, ref_ids = line.split(': ')
-
-            if db_tag.endswith('_id'):
-                db_tag = db_tag[:-3]
-            db_tag = db_tag.lower()
+            db_tag = db_tag.lower().removesuffix('_id')
 
             for edb_id in ref_ids.split(" "):
                 _refs.append(db_tag, edb_id)

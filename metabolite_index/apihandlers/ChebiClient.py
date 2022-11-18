@@ -4,7 +4,7 @@ import xmltodict as xmltodict
 from .ApiClientBase import ApiClientBase
 from ..attributes import EDB_SOURCES_OTHER, EDB_SOURCES
 from ..edb_formatting import pad_id, MultiDict, remap_keys, preprocess, map_to_edb_format
-from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..dal import ExternalDBEntity
 
 
 class ChebiClient(ApiClientBase):
@@ -29,6 +29,21 @@ class ChebiClient(ApiClientBase):
         'kegg compound accession': 'kegg_id',
     }
 
+    # 'definition': '',
+    # 'status': '',
+    # 'smiles': '',
+    # 'inchi': '',
+    # 'inchiKey': '',
+    # 'charge': '',
+    # 'mass': '',
+    # 'RegistryNumbers': '',
+    # 'Citations': '',
+    # 'ChemicalStructures': '',
+    # 'DatabaseLinks': '',
+    # 'OntologyParents': '',
+    # 'OntologyChildren': '',
+    # 'CompoundOrigins': ''
+
     _important_attr = {
         'stars'
     }
@@ -41,6 +56,10 @@ class ChebiClient(ApiClientBase):
         data = MultiDict()
 
         resp = xmltodict.parse(r.text)
+        # @TODO: ITT:
+        # resp = resp['S:Envelope']['S:Body']['getCompleteEntityResponse']['return']
+        #   KeyError: 'return'
+
         resp = resp['S:Envelope']['S:Body']['getCompleteEntityResponse']['return']
 
         # add DatabaseLinks as refs
@@ -70,19 +89,4 @@ class ChebiClient(ApiClientBase):
         data, etc = map_to_edb_format(data, important_attr=self._important_attr, edb_format=None, exclude_etc={None})
 
         data['edb_source'] = 'chebi'
-        return MetaboliteConsistent(**data)
-
-# 'definition': '',
-# 'status': '',
-# 'smiles': '',
-# 'inchi': '',
-# 'inchiKey': '',
-# 'charge': '',
-# 'mass': '',
-# 'RegistryNumbers': '',
-# 'Citations': '',
-# 'ChemicalStructures': '',
-# 'DatabaseLinks': '',
-# 'OntologyParents': '',
-# 'OntologyChildren': '',
-# 'CompoundOrigins': ''
+        return ExternalDBEntity(**data)

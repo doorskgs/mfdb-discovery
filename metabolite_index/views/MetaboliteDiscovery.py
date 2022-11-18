@@ -44,7 +44,7 @@ class MetaboliteDiscovery:
             for attr in self.__dict__:
                 getattr(self, attr).update(getattr(other, attr))
         else:
-            # try to map obj to MetaboliteConsistent and then merge
+            # try to map obj to MetaboliteDiscovery and then merge
             mapped_obj = map_to(other, cls_dest=MetaboliteDiscovery)
             return self.merge(mapped_obj)
 

@@ -40,12 +40,31 @@ def map_to_edb_format(me: dict, important_attr: set):
     return out, dict(me)
 
 
+hmdb_id_formats = (
+    # padded    - long / short
+    (len('HMDB0000008'), len('HMDB00008')),
+    # depadded  - long / short
+    (len('0000008'), len('00008'))
+)
 
 def replace_obvious_hmdb_id(hmdb_id):
-    if len(hmdb_id) == 9:
-        return hmdb_id[:4]+'00'+hmdb_id[4:]
+    if hmdb_id is None:
+        return hmdb_id
 
+    if hmdb_id.startswith('HMDB'):
+        if len(hmdb_id) == hmdb_id_formats[0][1]:
+            # keep prefix and pad with 00
+            return hmdb_id[:4] + '00' + hmdb_id[4:]
+        elif len(hmdb_id) != hmdb_id_formats[0][0]:
+            raise Exception("Invalid HMDB ID format provided:" + str(hmdb_id))
+    else:
+        if len(hmdb_id) == hmdb_id_formats[1][1]:
+            # pad with 00
+            return '00' + hmdb_id
+        elif len(hmdb_id) != hmdb_id_formats[1][0]:
+            raise Exception("Invalid HMDB ID format provided:" + str(hmdb_id))
     return hmdb_id
+
 
 def preprocess(data: dict):
     """

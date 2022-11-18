@@ -5,8 +5,6 @@ from eme.data_access import JSON_GEN, GUID
 
 class MetaboliteMixin:
     # Primary Ids
-    edb_id = Column(String(20), primary_key=True)
-    edb_source = Column(String(20), primary_key=True)
 
     chebi_id = Column(String(20))
     kegg_id = Column(String(20))
