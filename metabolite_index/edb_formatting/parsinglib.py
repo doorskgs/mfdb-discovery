@@ -110,6 +110,21 @@ def handle_names(me: dict):
         me['names'] = [me['names']]
     me['names'] = list(set(n.translate(_REPLACE_CHARS) for n in me['names'] if n is not None))
 
+def handle_masses(me: dict):
+    try:
+        me['mass'] = float(me['mass'])
+    except:
+        me['mass'] = None
+    try:
+        me['mi_mass'] = float(me['mi_mass'])
+    except:
+        me['mi_mass'] = None
+    try:
+        me['charge'] = float(me['charge'])
+    except:
+        me['charge'] = None
+
+
 def replace_esc(s: str):
     if '\\' in s:
         return s.replace('\\', '<ESC>')

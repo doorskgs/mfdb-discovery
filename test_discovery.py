@@ -13,7 +13,7 @@ path = os.path.dirname(__file__)
 disco = mi.discovery(path+'/test_discovery.ini', verbose=True)
 
 # run
-meta = disco.add_scalar_input(mi.EDBSource.chebi, 'CHEBI:40938')
+meta = disco.add_scalar_input(mi.EDBSource.chebi, 'CHEBI:17126')
 disco.run_discovery()
 
 # evaluate

@@ -89,3 +89,25 @@ def split_pubchem_ids(r):
         r['pubchem_id'] = strip_attr(try_flatten(list(filter(lambda x: not x.startswith("SID:"), r['pubchem_id']))), 'CID:')
 
     return sids
+
+def get_id_from_url(link):
+    link = link.lower()
+
+    if 'ebi.ac.uk/chebi' in link or 'ebi.ac.uk/webservices/chebi/' in link:
+        # http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:18102
+        db_id = link.split('chebiid=chebi:')[1].upper().removesuffix('.XML')
+        return db_id, 'chebi'
+    elif 'chemspider.com' in link:
+        # http://www.chemspider.com/Chemical-Structure.10128115.html
+        db_id = link.split('.')[-2]
+        return db_id, 'chemspider'
+    elif 'lipidmaps.org' in link:
+        # http://www.lipidmaps.org/data/LMSDRecord.php?LM_ID=LMFA07070002
+        db_id = link.lower().split('lm_id=')[1].upper()
+        return db_id, 'lipmaps'
+    elif 'hmdb.ca' in link:
+        # http://www.hmdb.ca/metabolites/HMDB0000791
+        db_id = link.split('metabolites/')[1].upper().removesuffix('.XML')
+        return db_id, 'hmdb'
+    else:
+        return None, None

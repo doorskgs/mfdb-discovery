@@ -19,7 +19,7 @@ class EDBRepository(RepositoryBase):
 
         return q.yield_per(1000)
 
-    def list_iter(self, start_from=None, stop_at=None) -> Iterable[ExternalDBEntity]:
+    def list_iter(self, start_from=None, stop_at=None) -> Iterable[tuple[str, str]]:
         q = self.session.query(ExternalDBEntity.edb_id, ExternalDBEntity.edb_source)\
             .order_by(ExternalDBEntity.edb_id)
 

@@ -1,5 +1,5 @@
 from .padding import strip_prefixes
-from .parsinglib import force_flatten, try_flatten, handle_names, flatten
+from .parsinglib import force_flatten, try_flatten, handle_names, flatten, handle_masses
 from ..attributes import  EDB_SOURCES, EDB_ID_OTHER, COMMON_ATTRIBUTES
 from .structs import MultiDict
 
@@ -77,6 +77,8 @@ def preprocess(data: dict):
     strip_prefixes(data)
 
     flatten(data, 'description')
+
+    handle_masses(data)
 
 def flatten_hmdb_hierarchies2(r: MultiDict):
     # Secondary IDs

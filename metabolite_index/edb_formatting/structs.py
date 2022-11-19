@@ -14,11 +14,12 @@ class MultiDict(dict):
             if not isinstance(oldval, list):
                 oldval = [oldval]
                 self.__setitem__(key, oldval)
+
             oldval.append(value)
         else:
             self.__setitem__(key, value)
 
-    def extend(self, key, value: list):
+    def extend(self, key, value: list | set):
         if isinstance(value, (list, tuple, set)):
             for val in value:
                 self.append(key, val)

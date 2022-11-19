@@ -3,7 +3,7 @@ from collections import defaultdict
 import requests
 
 from .ApiClientBase import ApiClientBase
-from ..edb_formatting import preprocess, map_to_edb_format, remap_keys, MultiDict
+from ..edb_formatting import preprocess, map_to_edb_format, remap_keys, MultiDict, get_id_from_url
 from ..dal import ExternalDBEntity
 
 
@@ -69,25 +69,13 @@ def parse_pubchem(edb_id, content, cont_refs, _mapping):
     for link in _links:
         link = link.lower()
 
-        if 'ebi.ac.uk/chebi' in link:
-            # http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:18102
-            db_id = link.split('chebiid=chebi:')[1].upper()
-            data.append('chebi_id', db_id)
-        elif 'chemspider.com' in link:
-            # http://www.chemspider.com/Chemical-Structure.10128115.html
-            db_id = link.split('.')[-2]
-            data.append('chemspider_id', db_id)
-        elif 'lipidmaps.org' in link:
-            # http://www.lipidmaps.org/data/LMSDRecord.php?LM_ID=LMFA07070002
-            db_id = link.lower().split('lm_id=')[1].upper()
-            data.append('lipmaps_id', db_id)
-        elif 'hmdb.ca' in link:
-            # http://www.hmdb.ca/metabolites/HMDB0000791
-            db_id = link.split('metabolites/')[1].upper()
-            data.append('hmdb_id', db_id)
-        else:
+        db_id, api_db_tag = get_id_from_url(link)
+
+        if db_id is None:
             # unrecognized XREF
             continue
+        data.append(api_db_tag+'_id', db_id)
+
 
     _resp = content['PC_Compounds'][0]
     props = _resp.pop('props')
