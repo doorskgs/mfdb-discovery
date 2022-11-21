@@ -11,21 +11,15 @@ class PubchemClient(ApiClientBase):
     _reverse = (
         'chebi_id', 'hmdb_id', 'kegg_id'
     )
-    _mapping = {
-        #'InChIKey': ('inchikey', 'sval'),
-        #'InChI': ('inchi', 'sval'),
-
-        'IUPAC Name': ('names', 'sval'),
-        'Molecular Formula': ('formula', 'sval'),
-
-        'Molecular Weight': ('mass', 'fval'),
-        'Mass': ('mi_mass', 'fval'),
-        'Log P': ('logp', 'fval'),
-    }
 
     _important_attr = {
         'logp'
     }
+
+    def __init__(self):
+        super().__init__()
+
+        self.load_mapping('pubchem')
 
     def fetch_api(self, edb_id):
         r = requests.get(url=f'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{edb_id}/json')

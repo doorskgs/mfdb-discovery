@@ -1,5 +1,5 @@
-from metabolite_index import EDBSource
-from metabolite_index.DiscoveryOptions import DiscoveryOptions
+from ..attributes import EDBSource
+from ..DiscoveryOptions import DiscoveryOptions
 
 
 class OptionsManager:

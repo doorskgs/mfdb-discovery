@@ -1,3 +1,5 @@
+import time
+
 from eme.data_access import get_repo
 from eme.mapper import map_to
 
@@ -33,6 +35,7 @@ class EDBManager:
 
         self.secondary_ids = secondary_ids
         self.opts = opts
+        self.t1 = time.time()
 
     def get_metabolite(self, edb_tag: str, edb_id: str) -> ExternalDBEntity:
         """
@@ -97,10 +100,13 @@ class EDBManager:
         :param save_in_cache:
         :return:
         """
+        now = time.time()
 
         edb_id_padded = pad_id(edb_id, edb_tag)
-        print(f"  Fetching {edb_tag} API: {edb_id_padded}")
+        print(f"  Fetching {edb_tag} API: {edb_id_padded} - {now-self.t1}")
         edb_record: ExternalDBEntity = self.apis[edb_tag].fetch_api(edb_id_padded)
+
+        self.t1 = now
 
         # map to edb_record
         #edb_record: ExternalDBEntity = map_to(edb_api, ExternalDBEntity)

@@ -1,7 +1,7 @@
 import os.path
 
-import metabolite_index as mi
-import metabolite_index.consistency as cons
+import mfdb_parsinglib as mi
+import mfdb_parsinglib.consistency as cons
 
 """
 MFDB-Discovery has convenience methods to configure the algorithm in another package

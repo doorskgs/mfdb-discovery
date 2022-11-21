@@ -4,7 +4,7 @@ import math
 
 from .DiscoveryOptions import DiscoveryOptions
 from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_supported
-from .edb_formatting import parsinglib, depad_id
+from .edb_formatting import parsinglib, depad_id, pad_id
 from .managers.EDBManager import EDBManager
 from .managers.OptionsManager import OptionsManager
 from .views.MetaboliteDiscovery import MetaboliteDiscovery
@@ -164,7 +164,8 @@ class DiscoveryAlg:
         # remove secondary IDs from discovery result
         for edb_tag, edb_id in self.secondary_ids:
             s: set = getattr(self.meta, edb_tag)
-            s.remove(edb_id)
+            s.discard(depad_id(edb_id, edb_tag))
+            s.discard(pad_id(edb_id, edb_tag))
 
         # todo: @later: clear and return an object representing all the data
         #self.clear()

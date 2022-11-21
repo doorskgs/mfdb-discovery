@@ -14,28 +14,6 @@ class ChebiClient(ApiClientBase):
     _reverse = (
         'pubchem_id', 'kegg_id', 'hmdb_id', 'lipmaps_id',
     )
-    _mapping = {
-        'chebiId': 'chebi_id',
-
-        'chebiAsciiName': 'names',
-        'Synonyms': 'names',
-        'IupacNames': 'names',
-
-        'monoisotopicMass': 'mi_mass',
-        'entityStar': 'stars',
-        'Formulae': 'formula',
-        'inchiKey': 'inchikey', 'InchiKey': 'inchikey',
-
-        'wikipedia accession': 'wiki_id',
-        'wikipedia_id': 'wiki_id',
-        'SecondaryChEBIIds': 'chebi_id_alt',
-        'kegg compound_id': 'kegg_id',
-    }
-
-    _important_attr = {
-        'stars'
-    }
-
     explore_children = {}
     explore_children_data = {
         'Synonyms',
@@ -46,6 +24,11 @@ class ChebiClient(ApiClientBase):
         'RegistryNumbers': 3,
         'DatabaseLinks': 2
     }
+
+    def __init__(self):
+        super().__init__()
+
+        self.load_mapping('chebi')
 
     def fetch_api(self, edb_id):
         edb_id = pad_id(edb_id, "chebi_id")
@@ -97,5 +80,4 @@ class ChebiClient(ApiClientBase):
 
         data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
-        data['edb_source'] = 'chebi'
-        return ExternalDBEntity(**data)
+        return ExternalDBEntity(edb_source='chebi', **data)

@@ -1,7 +1,7 @@
 from eme.mapper import Mapping
 
 from ..dal.entities.ExternalDBEntity import ExternalDBEntity
-from metabolite_index.edb_formatting import force_flatten
+from ..edb_formatting import force_flatten
 from ..views.MetaboliteDiscovery import MetaboliteDiscovery
 
 

@@ -1,6 +1,7 @@
 from operator import itemgetter
+from typing import Iterator
 
-from metabolite_index.edb_formatting.cluster1d import get_float_precision, cluster1d_eps, get_common_min_precision
+from ..edb_formatting.cluster1d import get_float_precision, cluster1d_eps, get_common_min_precision
 
 
 class MultiDict(dict):
@@ -19,7 +20,7 @@ class MultiDict(dict):
         else:
             self.__setitem__(key, value)
 
-    def extend(self, key, value: list | set):
+    def extend(self, key, value: list | set | Iterator):
         if isinstance(value, (list, tuple, set)):
             for val in value:
                 self.append(key, val)

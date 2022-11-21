@@ -106,8 +106,15 @@ def get_id_from_url(link):
         db_id = link.lower().split('lm_id=')[1].upper()
         return db_id, 'lipmaps'
     elif 'hmdb.ca' in link:
-        # http://www.hmdb.ca/metabolites/HMDB0000791
+        # https://hmdb.ca/metabolites/HMDB0000791
         db_id = link.split('metabolites/')[1].upper().removesuffix('.XML')
         return db_id, 'hmdb'
+    elif 'rest.kegg.jp/get' in link:
+        # https://rest.kegg.jp/get/cpd:C01390+C01197
+        db_ids = list(map(lambda x: x.removeprefix('cpd:').removeprefix('CPD:'), link.split('.jp/get/')[1].upper().split('+')))
+
+        if len(db_ids) == 1:
+            return db_ids[0], 'kegg'
+        return db_ids, 'kegg'
     else:
         return None, None

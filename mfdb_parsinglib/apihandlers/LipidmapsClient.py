@@ -6,13 +6,10 @@ from ..dal import ExternalDBEntity
 
 
 class LipidmapsClient(ApiClientBase):
-    _mapping = {
+    def __init__(self):
+        super().__init__()
 
-    }
-
-    _important_attr = {
-        ''
-    }
+        self.load_mapping('lipidmaps')
 
     def fetch_api(self, edb_id):
         url = f'https://www.lipidmaps.org/rest/compound/lm_id/{pad_id(edb_id, "lipmaps_id")}/all/'

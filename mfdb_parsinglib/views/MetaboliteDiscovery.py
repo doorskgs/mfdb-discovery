@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from metabolite_index.consistency import get_discovery_attribute_consistencies, ConsistencyClass
-from metabolite_index.edb_formatting.structs import repr_set, AlmostEqualSet, TrimSet
-from metabolite_index.edb_formatting import strip_attr, pad_id
+from ..consistency import get_discovery_attribute_consistencies, ConsistencyClass
+from ..edb_formatting.structs import repr_set, AlmostEqualSet, TrimSet
+from ..edb_formatting import strip_attr, pad_id
 from eme.mapper import map_to
 
 

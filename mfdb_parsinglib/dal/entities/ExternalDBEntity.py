@@ -11,6 +11,9 @@ class ExternalDBEntity(MetaboliteMixin, EntityBase):
     edb_source = Column(String(20), primary_key=True)
 
     def __init__(self, **kwargs):
+        self.edb_source = kwargs.get('edb_source')
+        self.edb_id = kwargs.get('edb_id')
+
         self.chebi_id = kwargs.get('chebi_id')
         self.kegg_id = kwargs.get('kegg_id')
         self.lipmaps_id = kwargs.get('lipmaps_id')

@@ -24,7 +24,7 @@ def find_package_data(where: str):
     return dict(incl)
 
 
-setup(name='metabolite-index',
+setup(name='mfdb-discovery',
       version='1.0.0',
       description='Multi-purpose web framework',
       url='https://github.com/doorskgs/mfdb-discovery',
@@ -32,11 +32,11 @@ setup(name='metabolite-index',
       author_email='rajmund.csombordi@hotmail.com',
       license='MIT',
       zip_safe=False,
-      packages=find_packages(where='metabolite-index'),
+      packages=find_packages(where='mfdb-discovery'),
       package_data=find_package_data(where='where'),
       entry_points={
         #   'console_scripts': [
-        #       'midb = metabolite-index._tools.cli:main',
+        #       'midb = mfdb-discovery._tools.cli:main',
         #   ],
       },
       install_requires=[
