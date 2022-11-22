@@ -1,8 +1,8 @@
 import unittest
 import random
 
-from metabolite_index.edb_formatting.cluster1d import cluster1d_eps, cluster1d_fixed
-from metabolite_index.edb_formatting.structs import AlmostEqualSet
+from mfdb_parsinglib.edb_formatting.cluster1d import cluster1d_eps, cluster1d_fixed
+from mfdb_parsinglib.edb_formatting.structs import AlmostEqualSet
 
 
 class MassClusteringTests(unittest.TestCase):
