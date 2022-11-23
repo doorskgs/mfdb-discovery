@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import eme
 
 N = 3
 D = 2

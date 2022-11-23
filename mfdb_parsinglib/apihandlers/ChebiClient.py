@@ -2,7 +2,6 @@ from io import BytesIO
 from lxml import etree
 
 import requests
-import xmltodict as xmltodict
 
 from .ApiClientBase import ApiClientBase
 from ..attributes import EDB_SOURCES_OTHER, EDB_SOURCES
@@ -41,7 +40,11 @@ class ChebiClient(ApiClientBase):
 
         context = etree.iterparse(BytesIO(r.content), events=('end',), tag=filter_tag)
         context = iter(context)
-        _xevt, xmeta = next(context)
+        try:
+            _xevt, xmeta = next(context)
+        except StopIteration:
+            # xml did not found <retun> so it's empty (chebi is yet again one API that does not know the contept of status codes)
+            return None
 
         data = MultiDict()
 

@@ -27,7 +27,7 @@ class EDBManager:
             'kegg': KeggClient(),
             'pubchem': PubchemClient(),
             'hmdb': HMDBClient(),
-            'lipidmaps': LipidmapsClient()
+            'lipmaps': LipidmapsClient()
         }
 
         self.repo: EDBRepository = get_repo(ExternalDBEntity)

@@ -3,8 +3,8 @@ import time
 
 from eme.data_access import get_repo
 
-import metabolite_index as mi
-from metabolite_index.dal import ExternalDBEntity, EDBRepository
+import mfdb_parsinglib as mi
+from mfdb_parsinglib.dal import ExternalDBEntity, EDBRepository
 
 
 # Configure

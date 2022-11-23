@@ -16,6 +16,10 @@ class LipidmapsClient(ApiClientBase):
         r = requests.get(url=url)
 
         data = r.json()
+        if not data:
+            return None
+
+        raise NotImplementedError()
 
         remap_keys(data, self._mapping)
         preprocess(data)

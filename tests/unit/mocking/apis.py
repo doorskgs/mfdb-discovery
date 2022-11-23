@@ -3,28 +3,30 @@ import os
 from mfdb_parsinglib.edb_formatting import get_id_from_url
 
 
+class MockResponse:
+    def __init__(self, text, status_code, ctype=None):
+        self.text = text
+        self.status_code = status_code
+        self.headers = {
+            'content-type': ctype
+        }
+
+    def json(self):
+        return json.loads(self.content)
+
+    @property
+    def content(self):
+        return self.text.encode('utf8')
+
+    def iter_lines(self, decode_unicode=False):
+        return iter(self.text.split('\n'))
+
+    @property
+    def is_redirect(self):
+        return False
+
+
 def mocked_requests_get(*args, **kwargs):
-    class MockResponse:
-        def __init__(self, text, status_code, ctype=None):
-            self.text = text
-            self.status_code = status_code
-            self.headers = {
-                'content-type': ctype
-            }
-
-        def json(self):
-            return json.loads(self.content)
-
-        @property
-        def content(self):
-            return self.text.encode('utf8')
-
-        def iter_lines(self):
-            return iter(self.text.split('\n'))
-
-        @property
-        def is_redirect(self):
-            return False
 
     uri = args[0] if len(args) >= 1 else kwargs['url']
     db_id, db_tag = get_id_from_url(uri)
