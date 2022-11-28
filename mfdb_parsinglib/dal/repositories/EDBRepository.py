@@ -1,32 +1,129 @@
-from typing import Generator, Iterable
+from typing import Generator, Iterable, AsyncGenerator
 
-from eme.data_access import Repository, RepositoryBase
-from sqlalchemy import and_, func, select, text
+import asyncpg
 
-from ..ctx import get_engine
-from ..entities.ExternalDBEntity import ExternalDBEntity
+from ..ctx import Repository
+from ...attributes import EDB_SOURCES
+from .RepositoryBase import RepositoryBase
+from ...views.MetaboliteConsistent import MetaboliteConsistent
 
 
-@Repository(ExternalDBEntity)
+@Repository(MetaboliteConsistent)
 class EDBRepository(RepositoryBase):
+    table_name = "edb"
 
-    def list_chebi_iter(self, stop_at=None) -> Iterable[ExternalDBEntity]:
-        q = self.session.query(self.T)\
-            .filter(ExternalDBEntity.edb_source == 'chebi')
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        if stop_at:
-            q = q.limit(stop_at)
+        self._s_edb_attributes = {
+            'inchikey',
+            'cas',
+            'metlin',
+            'swisslipids',
+            'chemspider',
+        }
 
-        return q.yield_per(1000)
+        # Attributes that lack the _id suffix in their DB column names
+        self._s_not_edb_id = {
+            'inchi',# not supported tho
+            'inchikey',
+            'smiles',# not supported tho
+        }
 
-    def list_iter(self, start_from=None, stop_at=None) -> Iterable[tuple[str, str]]:
-        q = self.session.query(ExternalDBEntity.edb_id, ExternalDBEntity.edb_source)\
-            .order_by(ExternalDBEntity.edb_id)
+    async def get(self, edb_source, edb_id) -> MetaboliteConsistent:
+        """
+        Gets EDB table record by primary key
+        :param edb_source:
+        :param edb_id:
+        :return:
+        """
+        conn: asyncpg.Connection
+        async with self.pool.acquire() as conn:
+            data = dict(await conn.fetchrow("""
+                SELECT *
+                FROM edb
+                WHERE edb_id = $1 and edb_source = $2
+            """, edb_id, edb_source))
 
-        if start_from:
-            q = q.offset(start_from)
+            data.pop("edb_id")
+            return MetaboliteConsistent(**data)
 
-        if stop_at:
-            q = q.limit(stop_at)
+    async def get_by(self, attribute, edb_id) -> list[MetaboliteConsistent]:
+        """
+        Gets record from EDB table by fetching either as pkey (edb_id) or foreign key (both edb_ids and attributes) or multiple cardinality attributes (attr_mul's keys).
+        \nThe following edb_sources are supported for this query:\n
+        - hmdb_id\n
+        - chebi_id\n
+        - pubchem_id\n
+        - kegg_id\n
+        - lipidmaps_id\n
+        - inchikey\n
+        - cas_id\n
+        - metlin_id\n
+        - swisslipids_id\n
+        - chemspider_id\n
 
-        return q.yield_per(2000)
+        The following attributes are not yet supported, but are planned to be supported as EDB ids in the future:\n
+        - metlin_id\n
+        - swisslipids_id\n
+        - chemspider_id\n
+
+        The following attributes will work but they're not supported due to lack of foreign keys:\n
+        - inchi\n
+        - smiles\n
+        - mass\n
+        - mi_mass\n
+        - charge\n
+        - mol\n
+
+        :param attribute: external database source or attribute
+        :param edb_id: external database ID
+        :return: MetaboliteConsistent
+        """
+
+        # add _id prefix for non-attributes
+        attr_db_name = attribute if attribute in self._s_not_edb_id else attribute + '_id'
+
+        conn: asyncpg.Connection
+        async with self.pool.acquire() as conn:
+            if attribute in self._s_edb_attributes:
+                # query by attribute (or non-mapped edb id)
+                _query_args = f"""
+                    SELECT *
+                    FROM edb
+                    WHERE {attr_db_name} = $1 OR attr_mul @> $2::jsonb
+                """, edb_id, f'{{"{attr_db_name}":"{edb_id}"}}'
+            else:
+                # query by EDB_ID
+                _query_args = f"""
+                    SELECT *
+                    FROM edb
+                    WHERE (edb_id = $1 AND edb_source = '{attr_db_name}')
+                    OR ({attr_db_name} = $1 AND edb_source <> '{attr_db_name}')
+                    OR attr_mul @> $2::jsonb
+                """, edb_id, f'{{"{attr_db_name}":"{edb_id}"}}'
+            # else:
+            #     raise Exception(f"Attribute or EDB id not supported: {attribute}")
+
+            result = []
+            for row in await conn.fetch(*_query_args):
+                data = dict(row)
+                data.pop("edb_id")
+
+                result.append(MetaboliteConsistent(**data))
+            return result
+
+    async def list_ids_iter(self, stop_at=None):
+        conn: asyncpg.Connection
+        async with self.pool.acquire() as conn:
+            _query = """
+                SELECT edb_id, edb_source
+                FROM edb
+                WHERE edb_source = 'pubchem' OR edb_source = 'chebi'
+            """
+
+            if stop_at:
+                _query += f"LIMIT {stop_at}"
+
+            for row in await conn.fetch(_query):
+                yield row['edb_id'], row['edb_source']

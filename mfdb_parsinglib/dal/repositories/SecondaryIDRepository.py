@@ -1,16 +1,21 @@
-from eme.data_access import Repository, RepositoryBase
-from sqlalchemy import and_, func
-from sqlalchemy.dialects.postgresql import array, dialect
+import asyncpg
 
-from ..entities.SecondaryID import SecondaryID
+from ..ctx import Repository
+from .RepositoryBase import RepositoryBase
+from ...views.SecondaryID import SecondaryID
 
 
 @Repository(SecondaryID)
 class SecondaryIDRepository(RepositoryBase):
+    table_name = "secondary_id"
 
-    def get_primary_id(self, eid2nd, edb_source):
+    async def get_primary_id(self, edb_source, edb_id):
+        conn: asyncpg.Connection
+        async with self.pool.acquire() as conn:
+            record: asyncpg.Record = await conn.fetchrow("""
+                SELECT edb_id
+                FROM secondary_id
+                WHERE edb_source = $2 AND $1 = ANY(secondary_ids)
+            """, edb_id, edb_source)
 
-        return self.session.query(SecondaryID.edb_id)\
-            .filter(SecondaryID.edb_source==edb_source)\
-            .filter(SecondaryID.secondary_ids.any(eid2nd))\
-            .first()
+        return record['edb_id'] if record else None

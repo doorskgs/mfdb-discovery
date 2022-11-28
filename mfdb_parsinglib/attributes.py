@@ -24,7 +24,7 @@ EDBs supported
 """
 EDB_SOURCES = set(map(lambda x: x.value, iter(EDBSource)))
 
-def is_supported(reftag: str | tuple[str, str]):
+def is_edb(reftag: str | tuple[str, str]):
     if isinstance(reftag, tuple) and len(reftag)==2:
         reftag = reftag[0]
 

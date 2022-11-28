@@ -1,12 +1,16 @@
 import queue
 from collections import defaultdict
 import math
+from typing import Generator
+
+from eme.mapper import map_to
 
 from .DiscoveryOptions import DiscoveryOptions
-from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_supported
+from .attributes import EDBSource, EDB_SOURCES, EDB_SOURCES_OTHER, is_edb
 from .edb_formatting import parsinglib, depad_id, pad_id
 from .managers.EDBManager import EDBManager
 from .managers.OptionsManager import OptionsManager
+from .views.MetaboliteConsistent import MetaboliteConsistent
 from .views.MetaboliteDiscovery import MetaboliteDiscovery
 
 EDB_REF = tuple[str, str]
@@ -61,7 +65,7 @@ class DiscoveryAlg:
         self.opts = OptionsManager()
         self.mgr = EDBManager(self.secondary_ids, self.opts)
 
-    def run_discovery(self):
+    async def run_discovery(self):
         """
         Using a queue,
         :return:
@@ -75,44 +79,42 @@ class DiscoveryAlg:
                 print(f"  {edb_src[0]}[{edb_src[1]}] -> {edb_ref[0]}[{edb_ref[1]}]")
 
             # todo: @ITT: BUG edb_id is the SOURCE id not the explorable one!!!!!
-            edb_record = self.mgr.get_metabolite(*edb_ref)
+            edb_records = await self.mgr.get_metabolite(*edb_ref)
 
-            if not edb_record:
+            if not edb_records:
                 self.undiscovered.add((edb_ref, edb_src))
                 continue
 
-            # edb record was discovered, add it to previously discovered data:
-            # if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
-            #     print("NAN MASS: ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
-            self.meta.merge(edb_record)
             self.discovered.add(edb_ref)
 
-            self.find_novel_ids(edb_ref, edb_record)
+            for edb_record in edb_records:
+                # edb record was discovered, add it to previously discovered data:
+                self.meta.merge(edb_record)
 
-            if self.Q.empty() and not self.reverse_lookup_ran:
-                # once we ran out of ids to explore, try reverse queries as a final attempt
-                self.resolve_reverse_queries()
+                self.find_novel_ids(edb_ref, edb_record)
 
         return self.finish_discovery()
 
-    def find_novel_ids(self, edb_ref, edb_record):
+    def find_novel_ids(self, edb_ref: EDB_REF, edb_record: MetaboliteConsistent | MetaboliteDiscovery):
+        """
+        Parses edb_record's attributes and IDs that haven't been explored before and enqueues them for discovery
+
+        :param edb_ref: EDB reference from which the record was found
+        :param edb_record: external database record
+
+        :return: true if new IDs/attributes were enqueued in record
+        """
         found_new = False
 
         # find novel EDB IDs and attribute references within this view
-        opts = self.opts.get_opts(edb_ref[0])
-        for attr in self.discoverable_attributes:
-            val = depad_id(getattr(edb_record, attr), attr)
-
-            if val:
-                edb_new = (attr, val)
-                self.enqueue(edb_new, edb_ref)
-                found_new = True
+        for edb_new in self.iter_discoverable(edb_record):
+            self.enqueue(edb_new, edb_ref)
+            found_new = True
         return found_new
 
     def enqueue(self, edb_ref: EDB_REF, edb_src: EDB_REF):
 
-        # todo: @later: support attribute queries too?
-        if not is_supported(edb_ref):
+        if not edb_ref not in self.discoverable_attributes:
             # unsupported EDB source, no need to enqueue because it can't be resolved by the manager
             self.undiscovered.add((edb_ref, edb_src))
             return False
@@ -122,41 +124,59 @@ class DiscoveryAlg:
             self.been_in_queue.add(edb_ref)
         return True
 
-    def resolve_reverse_queries(self):
+    def add_input(self, meta: MetaboliteDiscovery | MetaboliteConsistent, edb_source: EDBSource = None):
         """
-        This is used for a final attempt to reverse query existing EDB Ids and attributes
-        by querying in reverse (querying on the foreign keys of EDB table rather than its pkey EDB_ID)
-        we discover additional items that are added to the queue for natural resolve
+        Adds fields of input MetaboliteDiscovery view to the resolve queue
+        :param meta: metabolite discovery object
+        :param edb_source: EDB source tag (e.g. pubchem)
         :return:
         """
-        # missing ref value is empty list or sometimes None
-        #reverse_attrs = list(filter(lambda at: not getattr(self.meta, at), self.reverse_lookup))
-        if not self.reverse_lookup:
-            return
 
-        if self.verbose:
-            print('Reverse-querying', ', '.join(self.reverse_lookup))
-        self.reverse_lookup_ran = True
+        originating_edb_ref: EDB_REF = ("root_input", "-")
+        self.find_novel_ids(originating_edb_ref, meta)
 
-        edb_records = self.mgr.get_reverse(self.meta, *self.reverse_lookup)
+        consistent: MetaboliteConsistent
+        if isinstance(meta, MetaboliteDiscovery):
+            # map to consistent model
+            self.meta = meta
+        elif isinstance(meta, MetaboliteConsistent):
+            self.meta = map_to(meta, MetaboliteDiscovery)
+        else:
+            raise ValueError()
 
-        for edb_record in edb_records:
-            if edb_record.mass is not None and math.isnan(edb_record.mass) or edb_record.mi_mass is not None and math.isnan(edb_record.mi_mass):
-                print("NAN MASS(rev): ", edb_record.edb_id, edb_record.edb_source, edb_record.mass, edb_record.mi_mass)
-            self.meta.merge(edb_record)
+        return self.meta
 
-            edb_ref = (edb_record.edb_source, edb_record.edb_id)
+    def add_scalar_input(self, attribute: str | EDBSource, edb_id):
+        if isinstance(attribute, EDBSource):
+            attribute = attribute.value
 
-            found_new = self.find_novel_ids(edb_ref, edb_record)
+        if is_edb(attribute):
+            attribute = attribute+'_id'
+        elif attribute not in self.discoverable_attributes:
+            raise Exception(f"Attribute {attribute} is not configured to be discoverable. Please check your discovery config or the manual.")
 
-            if found_new:
-                # reset flag if we found at least one new ID
-                self.reverse_lookup_ran = False
+        meta = MetaboliteDiscovery()
 
-                if self.verbose:
-                    print("   revseq- ", *edb_ref)
+        getattr(meta, attribute).add(edb_id)
 
-        return edb_records
+        return self.add_input(meta)
+
+    def iter_discoverable(self, obj: MetaboliteDiscovery | MetaboliteConsistent) -> Generator[EDB_REF, None, None]:
+        """
+
+        :param obj:
+        :return:
+        """
+        is_meta = isinstance(obj, MetaboliteDiscovery)
+
+        for attr in self.discoverable_attributes:
+            val = getattr(obj, attr)
+
+            if val and is_meta:
+                for child in val:
+                    yield attr, depad_id(child, attr)
+            elif val and not is_meta:
+                yield attr, depad_id(val, attr)
 
     def finish_discovery(self):
         assert self.Q.empty()
@@ -172,32 +192,6 @@ class DiscoveryAlg:
 
         if self.verbose:
             print("\nDiscovery finished!\n---------------------------------\n")
-
-    def add_input(self, meta: MetaboliteDiscovery, edb_source: EDBSource = None):
-        """
-        Adds fields of input MetaboliteDiscovery view to the resolve queue
-        :param meta: metabolite discovery object
-        :param edb_source: EDB source tag (e.g. pubchem)
-        :return:
-        """
-        # attributes to resolve
-        opts = self.opts.get_opts(edb_source)
-        self.meta = meta
-
-        for edb_tag in self.discoverable_attributes:
-            edb_id = parsinglib.try_flatten(getattr(meta, edb_tag))
-
-            if edb_id:
-                if self.verbose:
-                    print("  Adding input:", edb_id, edb_tag)
-                edb_id = depad_id(edb_id, edb_tag)
-                self.enqueue((edb_tag, edb_id), ("root_input", "-"))
-
-    def add_scalar_input(self, edb_source: EDBSource, edb_id):
-        meta = MetaboliteDiscovery()
-        getattr(meta, edb_source.value+'_id').add(edb_id)
-        self.add_input(meta, edb_source)
-        return self.meta
 
     def clear(self):
         self.Q = queue.Queue()

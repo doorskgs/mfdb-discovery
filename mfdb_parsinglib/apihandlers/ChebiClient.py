@@ -6,7 +6,9 @@ import requests
 from .ApiClientBase import ApiClientBase
 from ..attributes import EDB_SOURCES_OTHER, EDB_SOURCES
 from ..edb_formatting import pad_id, MultiDict, remap_keys, preprocess, map_to_edb_format, split_pubchem_ids
-from ..dal import ExternalDBEntity
+from ..views.MetaboliteConsistent import MetaboliteConsistent
+from ..views.MetaboliteDiscovery import MetaboliteDiscovery
+
 
 
 class ChebiClient(ApiClientBase):
@@ -29,7 +31,7 @@ class ChebiClient(ApiClientBase):
 
         self.load_mapping('chebi')
 
-    def fetch_api(self, edb_id):
+    async def fetch_api(self, edb_id):
         edb_id = pad_id(edb_id, "chebi_id")
         url = f'https://www.ebi.ac.uk/webservices/chebi/2.0/test/getCompleteEntity?chebiId={edb_id}'
         r = requests.get(url=url)
@@ -83,4 +85,4 @@ class ChebiClient(ApiClientBase):
 
         data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
-        return ExternalDBEntity(edb_source='chebi', **data)
+        return MetaboliteConsistent(**data)

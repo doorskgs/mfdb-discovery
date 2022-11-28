@@ -48,16 +48,22 @@ class MetaboliteDiscovery:
             mapped_obj = map_to(other, cls_dest=MetaboliteDiscovery)
             return self.merge(mapped_obj)
 
+    def to_dict(self):
+        d = {}
+
+        for k,v in self.__dict__.items():
+            if isinstance(v, TrimSet):
+                d[k] = list(set(pad_id(s, k) for s in v))
+            elif isinstance(v, AlmostEqualSet):
+                d[k] = list(v.equivalence_set)
+            elif isinstance(v, dict):
+                d[k] = v
+
+        return d
+
     def __repr__(self):
+        repr_dict = self.to_dict()
         sb = [self.__class__.__name__]
-        repr_dict = dict(self.__dict__)
-
-        repr_dict['hmdb_id'] = set(pad_id(s, 'hmdb_id') for s in repr_dict['hmdb_id'])
-        repr_dict['chebi_id'] = set(pad_id(s, 'chebi_id') for s in repr_dict['chebi_id'])
-        repr_dict['lipmaps_id'] = set(pad_id(s, 'lipmaps_id') for s in repr_dict['lipmaps_id'])
-
-        repr_dict['mass'] = repr_dict['mass'].equivalence_set
-        repr_dict['mi_mass'] = repr_dict['mi_mass'].equivalence_set
 
         consistencies = get_discovery_attribute_consistencies(self)
 

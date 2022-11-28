@@ -1,5 +1,4 @@
 import re
-from collections import defaultdict
 
 from mfdb_parsinglib.edb_formatting import MultiDict
 

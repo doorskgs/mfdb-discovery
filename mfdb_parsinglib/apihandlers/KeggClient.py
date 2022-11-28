@@ -3,8 +3,8 @@ import requests
 from .ApiClientBase import ApiClientBase
 from .api_parsers.keggparser import parse_kegg
 from ..attributes import EDB_SOURCES, EDB_SOURCES_OTHER
-from ..dal import ExternalDBEntity
 from ..edb_formatting import pad_id, remap_keys, preprocess, map_to_edb_format
+from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
 class KeggClient(ApiClientBase):
@@ -22,7 +22,7 @@ class KeggClient(ApiClientBase):
         self._mapping.update((edb_tag, edb_tag+'_id') for edb_tag in (EDB_SOURCES|EDB_SOURCES_OTHER))
 
 
-    def fetch_api(self, edb_id):
+    async def fetch_api(self, edb_id):
         r = requests.get(url=f'{self.url_base}cpd:{pad_id(edb_id, "kegg_id")}')
 
         content = r.text
@@ -35,9 +35,9 @@ class KeggClient(ApiClientBase):
         preprocess(data)
         data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
-        return ExternalDBEntity(edb_source='kegg', **data)
+        return MetaboliteConsistent(**data)
 
-    def fetch_api_bulk(self, edb_ids: list[str]):
+    async def fetch_api_bulk(self, edb_ids: list[str]):
         assert len(edb_ids) <= 10, "KEGG allows bulk queries in tens"
 
         # we don't pad/depad KEGG ids ('C' prefix), but we do have to add the 'cpd:' prefix
@@ -46,7 +46,7 @@ class KeggClient(ApiClientBase):
 
         content = r.text
         if r.status_code != 200 or not content:
-            return None
+            return
 
         for data in parse_kegg(r.iter_lines(decode_unicode=True)):
             remap_keys(data, self._mapping)
@@ -55,4 +55,5 @@ class KeggClient(ApiClientBase):
 
             # todo: @later: for some reason, kegg's pubchem reference seems to be broken so we skip it
             data.pop('pubchem_id', None)
-            yield ExternalDBEntity(edb_source='kegg', **data)
+
+            yield MetaboliteConsistent(**data)

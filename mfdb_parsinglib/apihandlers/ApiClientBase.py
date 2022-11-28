@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 from eme.entities import load_settings
 
-from ..dal import ExternalDBEntity
+from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
 class ApiClientBase(metaclass=ABCMeta):
@@ -23,5 +23,5 @@ class ApiClientBase(metaclass=ABCMeta):
         return s
 
     @abstractmethod
-    def fetch_api(self, edb_id) -> ExternalDBEntity:
+    async def fetch_api(self, edb_id) -> MetaboliteConsistent:
         pass

@@ -62,7 +62,8 @@ def replace_obvious_hmdb_id(hmdb_id):
             # pad with 00
             return '00' + hmdb_id
         elif len(hmdb_id) != hmdb_id_formats[1][0]:
-            raise Exception("Invalid HMDB ID format provided:" + str(hmdb_id))
+            pass
+            #raise Exception("Invalid HMDB ID format provided:" + str(hmdb_id))
     return hmdb_id
 
 

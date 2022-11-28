@@ -1,13 +1,12 @@
 import requests
 
 from io import StringIO, BytesIO
-import xml.etree.ElementTree as ET
 
 from lxml import etree
 
 from .ApiClientBase import ApiClientBase
 from ..edb_formatting import pad_id, preprocess, remap_keys, map_to_edb_format, replace_obvious_hmdb_id, MultiDict
-from ..dal import ExternalDBEntity
+from ..views.MetaboliteConsistent import MetaboliteConsistent
 
 
 class HMDBClient(ApiClientBase):
@@ -23,7 +22,7 @@ class HMDBClient(ApiClientBase):
 
         self.load_mapping('hmdb')
 
-    def fetch_api(self, edb_id):
+    async def fetch_api(self, edb_id):
         db_id = pad_id(edb_id, 'hmdb_id')
         r = requests.get(url=f'https://hmdb.ca/metabolites/{db_id}.xml', allow_redirects=False)
 
@@ -64,5 +63,4 @@ class HMDBClient(ApiClientBase):
         preprocess(data)
         data, etc = map_to_edb_format(data, important_attr=self._important_attr)
 
-        data['edb_source'] = 'hmdb'
-        return ExternalDBEntity(**data)
+        return MetaboliteConsistent(**data)

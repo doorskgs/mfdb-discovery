@@ -1,6 +1,5 @@
 import time
 
-from eme.data_access import get_repo
 from eme.mapper import map_to
 
 from ..apihandlers.ApiClientBase import ApiClientBase
@@ -9,10 +8,12 @@ from ..apihandlers.KeggClient import KeggClient
 from ..apihandlers.PubchemClient import PubchemClient
 from ..apihandlers.HMDBClient import HMDBClient
 from ..apihandlers.LipidmapsClient import LipidmapsClient
+from ..dal import initialize_db, get_repo, EDBRepository, SecondaryIDRepository
 
-from ..dal import EDBRepository, SecondaryIDRepository, ExternalDBEntity, SecondaryID
 from ..edb_formatting import pad_id, depad_id, replace_obvious_hmdb_id
+from ..views.MetaboliteConsistent import MetaboliteConsistent
 from ..views.MetaboliteDiscovery import MetaboliteDiscovery
+from ..views.SecondaryID import SecondaryID
 
 
 class EDBManager:
@@ -30,21 +31,28 @@ class EDBManager:
             'lipmaps': LipidmapsClient()
         }
 
-        self.repo: EDBRepository = get_repo(ExternalDBEntity)
-        self.repo2nd: SecondaryIDRepository = get_repo(SecondaryID)
+        self.repo_edb: EDBRepository = get_repo(MetaboliteConsistent)
+        self.repo_2nd: SecondaryIDRepository = get_repo(SecondaryID)
 
         self.secondary_ids = secondary_ids
         self.opts = opts
         self.t1 = time.time()
 
-    def get_metabolite(self, edb_tag: str, edb_id: str) -> ExternalDBEntity:
+    async def initialize(self):
+        """
+        Initializes aio database and http libraries, connections
+        """
+
+        await initialize_db()
+
+    async def get_metabolite(self, edb_tag: str, edb_id: str) -> list[MetaboliteConsistent]:
         """
 
         :param edb_tag:
         :param edb_id:
         :return:
         """
-        edb_record: ExternalDBEntity | None = None
+        edb_records: list[MetaboliteConsistent] | None = None
 
         edb_source = edb_tag.removesuffix('_id')
         opts = self.opts.get_opts(edb_source)
@@ -56,43 +64,22 @@ class EDBManager:
 
         if opts.cache_enabled:
             # find by edb table
-            edb_record = self.repo.get((edb_id, edb_source))
+            edb_records = await self.repo_edb.get_by(edb_source, edb_id)
 
-        if not edb_record:
+        if not edb_records:
             # find primary ID from secondary id
-            if edb_id := self.resolve_secondary_id(edb_source, edb_id):
+            if edb_id := await self.resolve_secondary_id(edb_source, edb_id):
                 # query again
-                edb_record = self.repo.get((edb_id, edb_source))
+                edb_records = await self.repo_edb.get_by(edb_source, edb_id)
 
-        if not edb_record and opts.api_enabled:
-            edb_record = self.fetch_api(edb_source, edb_id, save_in_cache=opts.cache_upsert)
+        if not edb_records and opts.api_enabled:
+            edb_record = await self.fetch_api(edb_source, edb_id, save_in_cache=opts.cache_upsert)
+            if edb_record:
+                edb_records = [edb_record]
 
-        return edb_record
+        return edb_records
 
-    def get_reverse(self, meta: ExternalDBEntity | MetaboliteDiscovery, *edb_tags) -> list[ExternalDBEntity]:
-        """
-
-        :param meta:
-        :param edb_tags:
-        :return:
-        """
-        q = self.repo.session.query(ExternalDBEntity)
-
-        for edb_tag in edb_tags:
-            search_val = getattr(meta, edb_tag)
-            _column = getattr(ExternalDBEntity, edb_tag)
-
-            if isinstance(search_val, (set, list, tuple)):
-                # SQL IN
-                search_val = set(map(lambda x: depad_id(x, edb_tag), search_val))
-                q = q.filter(_column.in_(search_val))
-            else:
-                # scalar WHERE
-                search_val = depad_id(search_val, edb_tag)
-                q = q.filter(_column == search_val)
-            return q.all()
-
-    def fetch_api(self, edb_tag, edb_id, save_in_cache=False):
+    async def fetch_api(self, edb_tag, edb_id, save_in_cache=False):
         """
         fetch edb record from their public API
         :param edb_tag:
@@ -104,7 +91,7 @@ class EDBManager:
 
         edb_id_padded = pad_id(edb_id, edb_tag)
         print(f"  Fetching {edb_tag} API: {edb_id_padded} - {now-self.t1}")
-        edb_record: ExternalDBEntity = self.apis[edb_tag].fetch_api(edb_id_padded)
+        edb_record: MetaboliteConsistent = await self.apis[edb_tag].fetch_api(edb_id_padded)
 
         self.t1 = now
 
@@ -116,23 +103,23 @@ class EDBManager:
 
         if edb_record and save_in_cache:
             # cache api results to table
-            self.repo.create(edb_record)
+            await self.repo_edb.create(edb_record)
 
         return edb_record
 
-    def resolve_secondary_id(self, edb_source, edb_id):
+    async def resolve_secondary_id(self, edb_source, edb_id):
         """
         Gets record by querying EDB ID as a secondary ID instead of pkey
         :param edb_source:
         :param edb_id:
         :return:
         """
-        resp = self.repo2nd.get_primary_id(edb_id, edb_source)
+        primary_id = await self.repo_2nd.get_primary_id(edb_source, edb_id)
 
-        if not resp:
+        if not primary_id:
             return edb_id
         else:
             edb_tag = edb_source + '_id'
             self.secondary_ids.add((edb_tag, edb_id))
 
-            return resp.edb_id
+            return primary_id

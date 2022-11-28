@@ -65,6 +65,9 @@ class AlmostEqualSet(set):
         \n   ∀Ni,Nj ∈ cluster : Ni - Nj <= eps
         :return:
         """
+        if len(self) == 0:
+            return set()
+
         if self.eps is None:
             # eps diff scaling with the minimum flat precision of the set
             min_prec = get_common_min_precision(self)
@@ -82,6 +85,12 @@ class AlmostEqualSet(set):
         prec = [(f, get_float_precision(f)) for f in cluster]
         rf = max(prec, key=itemgetter(1))[0]
         return rf
+
+    def update(self, _set):
+        _updated_set = set(x for x in _set if x is not None)
+
+        if _updated_set:
+            super().update(_updated_set)
 
     def __repr__(self):
         return repr_set(self.equivalence_set)

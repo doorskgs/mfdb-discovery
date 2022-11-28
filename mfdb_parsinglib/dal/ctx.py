@@ -1,71 +1,79 @@
+import json
 import os.path
 
-#import redis
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, close_all_sessions
+import asyncpg
+from eme.entities import load_settings, declare_service_type, iter_services
 
-from eme import data_access
-from eme.data_access import register_session
-from eme.entities import load_settings
+Repository, get_repo = declare_service_type('Repo', 'T')
 
 
 config = load_settings(os.path.dirname(__file__)+"/ctx.ini")
-db_type = config.get('db.type')
 
-# an Engine, which the Session will use for connection resources
-if db_type == 'sqlite':
-    db_engine = create_engine('sqlite:///{file}'.format(**config[db_type]), connect_args={'check_same_thread': False})
-else:
-    if 'driver' in config[db_type]:
-        db_type += '+' + config[db_type].pop('driver')
-    db_engine = create_engine(db_type+'://{user}:{password}@{host}/{database}'.format(**config[db_type]))
+single_connection = True
+pool: asyncpg.Pool | None = None
 
-Session = sessionmaker(bind=db_engine)
+async def setup_conn(conn):
+    def _encoder(value):
+        return b'\x01' + json.dumps(value).encode('utf-8')
+    def _decoder(value):
+        return json.loads(value[1:].decode('utf-8'))
+    await conn.set_type_codec('jsonb', encoder=_encoder, decoder=_decoder, schema='pg_catalog', format='binary')
+    await conn.set_type_codec('json', encoder=json.dumps, decoder=json.loads, schema='pg_catalog', format='text')
 
-db_session = Session()
+    for repo in iter_services('Repo'):
+        if single_connection:
+            repo.conn = conn
+            # single connection
+        #connections.append(conn)
 
-register_session('db', db_session)
+async def initialize_db(pool_size=None):
+    global pool, single_connection
+    if pool:
+        # already initialized
+        return
 
+    db = config.get('db.dbhandler')
 
-def set_session(sess, sessid='db'):
-    global db_session
+    min_size, max_size = pool_size if pool_size else config.get(f'{db}.pool_size', cast=lambda x: map(int, x), default=(10, 10))
+    single_connection = config.get(f'{db}.single_connection', cast=bool, default=True)
 
-    close_all_sessions()
+    pool = await asyncpg.create_pool(
+        config.get(f'{db}.dsn'),
+        min_size=min_size,
+        max_size=max_size,
+        max_queries=config.get(f'{db}.max_queries', cast=int, default=50000),
+        max_inactive_connection_lifetime=config.get(f'{db}.max_inactive_connection_lifetime', cast=float, default=300.0),
 
-    db_session = sess
-    register_session(sessid, db_session)
+        # conn kwargs
+        max_cached_statement_lifetime=config.get(f'{db}.max_cached_statement_lifetime', cast=float, default=0),
+        init=setup_conn
+    )
 
-    # todo: put this into eme's register_session (if new)
-    for repo in data_access.repositories.values():
-        repo.session = db_session
+    if not single_connection:
+        for repo in iter_services('Repo'):
+            repo.pool = pool
 
-
-def get_session(force=False):
-    global db_session
-
-    if force:
-        db_session.close()
-        db_session = Session()
-
-    return db_session
-
-
-def get_engine():
-    return db_engine
-
-
-def set_engine(eng):
-    global db_engine
-
-    db_engine = eng
+# async def create_connection(dbtype=None):
+#     if dbtype is None:
+#         dbtype = config.get('db.dbhandler')
+#     dbcfg = config[dbtype]
 #
-# redis_session = None
+#     conn = await asyncpg.connect(dbcfg.pop('dsn'), max_cached_statement_lifetime=0)
+#
+#     connections.append(conn)
 
 
-# def get_redis(force=False):
-#     global redis_session
-#
-#     if redis_session is None or force:
-#         redis_session = redis.StrictRedis(**config['redis'])
-#
-#     return redis_session
+async def close_db():
+    if single_connection:
+        await pool.close()
+    else:
+        pass
+        # for conn in connections:
+        #     await conn.close()
+        #
+        # connections.clear()
+
+async def get_conn():
+    #return connections[0]
+    pass
+    # async with pool.acquire() as connection:

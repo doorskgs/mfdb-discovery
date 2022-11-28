@@ -51,7 +51,7 @@ def get_discovery_attribute_consistencies(meta) -> dict[str, ConsistencyClass]:
 
     return attr_consistencies
 
-def get_consistency_class(meta):
+def get_consistency_class(meta) -> tuple[ConsistencyClass, ConsistencyClass, ConsistencyClass]:
     c_mass = ConsistencyClass.NONE
     c_edb_ids = ConsistencyClass.NONE
     c_master_ids = ConsistencyClass.NONE
