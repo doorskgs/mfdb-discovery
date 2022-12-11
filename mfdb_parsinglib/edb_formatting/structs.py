@@ -10,7 +10,7 @@ class MultiDict(dict):
     """
 
     def append(self, key, value):
-        if oldval := self.get(key):
+        if (oldval := self.get(key)) is not None:
             # there are multiple entries in buffer, store them in a list
             if not isinstance(oldval, list):
                 oldval = [oldval]
@@ -27,6 +27,9 @@ class MultiDict(dict):
         else:
             self.append(key, value)
 
+    def update(self, __m, **kwargs) -> None:
+        for k,v in __m.items():
+            self.extend(k, v)
 
 class TrimSet(set):
     def __init__(self, seq=(), trimmer=None):

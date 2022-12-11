@@ -6,7 +6,7 @@ from ..views.MetaboliteDiscovery import MetaboliteDiscovery
 
 
 def trim_attr_mul(opt, dst):
-    return {k:v for k, v in dst.attr_mul.items() if not v}
+    return {k:v for k, v in dst.attr_mul.items() if v}
 
 def extra_ref(n, opt):
     return set(opt.attr_mul.get(n, []))
@@ -20,8 +20,6 @@ def consistent2disco(mapper):
     :param mapper:
     :return:
     """
-    # TODO: @later: add description into JSON like {edb_source -> descript}
-
     # TODO: store attr other in MetaboliteDiscovery?
 
     # TODO: store mol file
@@ -51,6 +49,8 @@ def consistent2disco(mapper):
     mapper.for_member('mol', mapper.ignore())
     mapper.for_member('swisslipids_id', mapper.ignore())
 
+    mapper.for_member('attr_other', 'attr_other')
+
 
 @Mapping(MetaboliteDiscovery, MetaboliteConsistent)
 def disco2consistent(mapper):
@@ -62,7 +62,6 @@ def disco2consistent(mapper):
     :return:
     """
 
-    # todo: handle description later
     # todo: handle mol files later
     # todo: handle other attributes later
 
@@ -91,7 +90,7 @@ def disco2consistent(mapper):
     mapper.for_member('mi_mass', lambda opt, dst: force_flatten(opt.mi_mass, dst.attr_mul.setdefault('mi_mass', [])))
 
     mapper.for_member('attr_mul', trim_attr_mul)
-    mapper.for_member('attr_other', lambda opt: {})
+    mapper.for_member('attr_other', 'attr_other')
 
     mapper.for_member('swisslipids_id', mapper.ignore())
     mapper.for_member('mol', mapper.ignore())

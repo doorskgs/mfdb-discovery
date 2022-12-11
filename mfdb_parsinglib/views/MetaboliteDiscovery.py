@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from ..consistency import get_discovery_attribute_consistencies, ConsistencyClass
-from ..edb_formatting.structs import repr_set, AlmostEqualSet, TrimSet
+from ..edb_formatting.structs import repr_set, AlmostEqualSet, TrimSet, MultiDict
 from ..edb_formatting import strip_attr, pad_id
 from eme.mapper import map_to
 
@@ -34,6 +34,8 @@ class MetaboliteDiscovery:
 
     description: dict[str, str] = field(default_factory=dict)
 
+    attr_other: dict[str, str] = field(default_factory=MultiDict)
+
     @property
     def primary_name(self):
         # @todo: policy to find primary_name ?
@@ -64,6 +66,7 @@ class MetaboliteDiscovery:
     def __repr__(self):
         repr_dict = self.to_dict()
         sb = [self.__class__.__name__]
+        repr_dict.update(repr_dict.pop('attr_other'))
 
         consistencies = get_discovery_attribute_consistencies(self)
 

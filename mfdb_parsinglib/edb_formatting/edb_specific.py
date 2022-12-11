@@ -23,14 +23,14 @@ def map_to_edb_format(me: dict, important_attr: set):
 
     # force scalar and store redundant ids/attributes
     for _key in (EDB_IDS | COMMON_ATTRIBUTES | EDB_ID_OTHER) - {"names"}:
-        if val := me.pop(_key, None):
+        if (val := me.pop(_key, None)) is not None:
             out[_key] = force_flatten(val, redundant_values := [])
 
             if redundant_values:
                 attr_mul.extend(_key, redundant_values)
 
     for _key in important_attr:
-        if val := me.pop(_key, None):
+        if (val := me.pop(_key, None)) is not None:
             # todo: should we best-effort flatten other attributes OR force flatten them?
             attr_other.extend(_key, try_flatten(val))
 

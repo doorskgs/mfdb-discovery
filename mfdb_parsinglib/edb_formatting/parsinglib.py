@@ -94,7 +94,7 @@ _REPLACE_CHARS = {
     8211: '-',  # –
     8209: '-',  # ‑
     # special representation that are converted back frontend side
-    ord('\\'): '<ESC>',
+    #ord('\\'): '<ESC>',
     # manual input errors that are post-corrected (+tab, NL characters)
     160: ' ',  #  
     65279: ' ',  # ﻿
@@ -103,12 +103,21 @@ _REPLACE_CHARS = {
     8201: ' ',  #
 } | {i: ' ' for i in range(1, 32)}
 
-def handle_names(me: dict):
-    # force_list(data, 'names')
+def strip_esc_ad(txt):
+    if '\\d' in txt:
+        txt = txt.replace('\\d', 'd')
+    if '\\a' in txt:
+        txt = txt.replace('\\a', 'a')
+    return txt
 
-    if not isinstance(me['names'], (tuple, list, set)):
-        me['names'] = [me['names']]
-    me['names'] = list(set(n.translate(_REPLACE_CHARS) for n in me['names'] if n is not None))
+def handle_names(data: dict):
+    if not isinstance(data['names'], (tuple, list, set)):
+        data['names'] = [handle_name(data['names'])]
+    else:
+        data['names'] = list(set(handle_name(n) for n in data['names'] if n is not None))
+
+def handle_name(name: str):
+    return strip_esc_ad(name).translate(_REPLACE_CHARS)
 
 def handle_masses(me: dict):
     try:
