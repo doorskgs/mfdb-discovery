@@ -46,7 +46,6 @@ class DiscoveryAlg:
     def __init__(self):
         # Discovery options defined for each EDB source
         self.verbose = False
-        self.reverse_lookup: set[str] = set()
         self.discoverable_attributes: set[str] = set()
 
         # Data sets and state variables used for the algorithm
@@ -56,7 +55,6 @@ class DiscoveryAlg:
         self.ambiguous = []
         self.discovered = set()
         self.been_in_queue = set()
-        self.reverse_lookup_ran = False
 
         # main object to aggregate EDB sources
         self.meta: MetaboliteDiscovery | None = None
@@ -201,4 +199,3 @@ class DiscoveryAlg:
         self.ambiguous.clear()
         self.discovered.clear()
         self.been_in_queue.clear()
-        self.reverse_lookup_ran = False

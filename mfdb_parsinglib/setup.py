@@ -16,7 +16,6 @@ def build_discovery(cfg: str | dict | SettingWrapper = None, verbose = False) ->
         cfg = SettingWrapper(_default_settings)
 
     disco = DiscoveryAlg()
-    _reverse_lookup = set()
     _discoverable_attributes: set[str] = set()
 
     # Setup attribute options
@@ -26,9 +25,7 @@ def build_discovery(cfg: str | dict | SettingWrapper = None, verbose = False) ->
 
         attr_name = attr if attr in COMMON_ATTRIBUTES else attr + '_id'
 
-        if cfg.get(f'{attr}.reverse', cast=bool, default=False):
-            _reverse_lookup.add(attr_name)
-
+        # if cfg.get(f'{a
         if cfg.get(f'{attr}.discoverable', cast=bool, default=False):
             _discoverable_attributes.add(attr_name)
 
@@ -43,7 +40,6 @@ def build_discovery(cfg: str | dict | SettingWrapper = None, verbose = False) ->
 
     # setup discovery
     disco.verbose = cfg.get('discovery.verbose', cast=bool, default=verbose)
-    disco.reverse_lookup = _reverse_lookup
     disco.discoverable_attributes = _discoverable_attributes
 
     return disco
@@ -58,7 +54,6 @@ def create_settings_file(path):
 
 _default_edb_settings = {
     'discoverable': 'yes',
-    'reverse': 'yes',
     'fetch_api': 'yes',
     'cache_enabled': 'yes',
     'cache_api_result': 'no',
@@ -67,7 +62,6 @@ _default_edb_settings = {
 _default_settings = {
     'pubchem': {
         'discoverable': 'yes',
-        'reverse': 'yes',
         'fetch_api': 'no',
         'cache_enabled': 'yes',
         'cache_api_result': 'no',
@@ -77,27 +71,21 @@ _default_settings = {
     'kegg': _default_edb_settings,
     'lipmaps': _default_edb_settings,
     'cas': {
-        'discoverable': 'no',
-        'reverse': 'yes'
+        'discoverable': 'yes',
     },
     'chemspider': {
-        'discoverable': 'no',
-        'reverse': 'yes'
+        'discoverable': 'yes',
     },
     'metlin': {
-        'discoverable': 'no',
-        'reverse': 'yes'
+        'discoverable': 'yes',
     },
     "inchikey": {
-        'discoverable': 'no',
-        'reverse': 'yes'
+        'discoverable': 'yes',
     },
     "smiles": {
-        'discoverable': 'no',
-        'reverse': 'yes'
+        'discoverable': 'yes',
     },
     'swisslipids': {
-        'discoverable': 'no',
-        'reverse': 'no'
+        'discoverable': 'yes',
     }
 }

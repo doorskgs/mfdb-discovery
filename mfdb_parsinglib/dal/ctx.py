@@ -46,7 +46,12 @@ async def initialize_db(pool_size=None):
 
         # conn kwargs
         max_cached_statement_lifetime=config.get(f'{db}.max_cached_statement_lifetime', cast=float, default=0),
-        init=setup_conn
+        statement_cache_size=config.get(f'{db}.statement_cache_size', cast=int, default=100),
+        init=setup_conn,
+
+        server_settings={
+            'jit': 'off'
+        }
     )
 
     if not single_connection:

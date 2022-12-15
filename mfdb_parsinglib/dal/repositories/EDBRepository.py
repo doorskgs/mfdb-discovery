@@ -1,5 +1,6 @@
+import time
 from typing import Generator, Iterable, AsyncGenerator
-
+import collections
 import asyncpg
 
 from ..ctx import Repository
@@ -29,6 +30,8 @@ class EDBRepository(RepositoryBase):
             'inchikey',
             'smiles',# not supported tho
         }
+
+        self.iamspeed = collections.defaultdict(float)
 
     async def get(self, edb_source, edb_id) -> MetaboliteConsistent:
         """
@@ -83,25 +86,27 @@ class EDBRepository(RepositoryBase):
 
         # add _id prefix for non-attributes
         attr_db_name = attribute if attribute in self._s_not_edb_id else attribute + '_id'
+        t1 = time.time_ns()
 
         conn: asyncpg.Connection
         async with self.pool.acquire() as conn:
+            self.iamspeed['pool_conn'] += time.time_ns() - t1
+
             if attribute in self._s_edb_attributes:
                 # query by attribute (or non-mapped edb id)
-                _query_args = f"""
-                    SELECT *
-                    FROM edb
-                    WHERE {attr_db_name} = $1 OR attr_mul @> $2::jsonb
-                """, edb_id, f'{{"{attr_db_name}":"{edb_id}"}}'
+                _query_args = ' '.join([
+                    "SELECT * FROM edb",
+                    f"WHERE {attr_db_name} = $1",
+                    f"OR attr_mul->>'{attr_db_name}' = $1"
+                ]), edb_id
             else:
                 # query by EDB_ID
-                _query_args = f"""
-                    SELECT *
-                    FROM edb
-                    WHERE (edb_id = $1 AND edb_source = '{attr_db_name}')
-                    OR ({attr_db_name} = $1 AND edb_source <> '{attr_db_name}')
-                    OR attr_mul @> $2::jsonb
-                """, edb_id, f'{{"{attr_db_name}":"{edb_id}"}}'
+                _query_args = ' '.join([
+                    "SELECT * FROM edb",
+                    f"WHERE {attr_db_name} = $1",
+                    f"OR (edb_id = $1 AND edb_source = '{attr_db_name}')"
+                    f"OR attr_mul->>'{attr_db_name}' = $1"
+                ]), edb_id
             # else:
             #     raise Exception(f"Attribute or EDB id not supported: {attribute}")
 
@@ -111,16 +116,18 @@ class EDBRepository(RepositoryBase):
                 data.pop("edb_id")
 
                 result.append(MetaboliteConsistent(**data))
+
+            self.iamspeed[_query_args[0]] += time.time_ns() - t1
+
             return result
 
-    async def list_ids_iter(self, stop_at=None):
+    async def list_ids_iter(self, edb_sources: list[str], stop_at=None):
         conn: asyncpg.Connection
         async with self.pool.acquire() as conn:
             _query = """
                 SELECT edb_id, edb_source
                 FROM edb
-                WHERE edb_source = 'pubchem' OR edb_source = 'chebi'
-            """
+                WHERE """ + ' OR '.join(map(lambda x: f"edb_source = '{x}'", edb_sources))
 
             if stop_at:
                 _query += f"LIMIT {stop_at}"
